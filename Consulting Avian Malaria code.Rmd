@@ -11,6 +11,8 @@ library(readxl)
 library(tidyverse)
 ```
 
+Read in the data 
+
 ```{r}
 malaria <- read_excel("MalariaSampling_MasterFile_Sept23.xlsx")
 
