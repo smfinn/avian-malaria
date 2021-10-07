@@ -1,0 +1,220 @@
+---
+title: "Consulting Avian Malaria"
+author: "Sean Finn & Evelyn Lupancu"
+date: "9/17/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(tidyverse)
+```
+
+```{r}
+malaria <- read_excel("MalariaSampling_MasterFile_Sept23.xlsx")
+
+# Rename long variables
+malaria <- malaria %>% rename(screened_l = `Screened for Leuco`,
+                              screened_h = `Screened for HAEM`,
+                              screened_p = `Screened for Plas`,
+                              positive_l = `Positive=1...21`,
+                              positive_h = `Positive=1...27`,
+                              positive_p = `Positive=1...33`,
+                              posdesig_l = `Pos Designation...22`,
+                              posdesig_h = `Pos Designation...28`,
+                              posdesig_p = `Pos Designation...34`)
+
+# Change elevation variable to numeric
+malaria$Elevation <- str_remove_all(malaria$Elevation, "m")
+malaria$Elevation <- as.numeric(malaria$Elevation)
+```
+
+## Exploratory Data Analysis
+
+```{r}
+table(malaria$Country)
+table(malaria$District)
+hist(malaria$Elevation)
+```
+
+Boxplots by co-infection
+Map?
+
+
+## 1. How often do co-infections occur within the same genera of avian malarial pathogens? 
+
+*Among birds who are infected*
+
+```{r}
+total_n <- 3418
+
+# Leucocytozoon
+sum(malaria$screened_l == "Yes")   # How many screened
+sum(malaria$positive_l, na.rm = T) # How many positive 
+sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T)  # Co-infections
+(p_L <- 198 / 749)
+n_L <- 749
+ci_L.lower <- p_L - qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
+ci_L.upper <- p_L + qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
+cat("95% confidence interval: [", round(c(ci_L.lower, ci_L.upper)*100, 2), "]")
+
+# Haemocrodius
+sum(malaria$screened_h == "Yes")   # How many screened
+sum(malaria$positive_h, na.rm = T) # How many positive 
+sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T)  # Co-infections
+(p_H <- 51 / 348)
+n_H <- 348
+ci_H.lower <- p_H - qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
+ci_H.upper <- p_H + qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
+cat("95% confidence interval: [", round(c(ci_H.lower, ci_H.upper)*100, 2), "]")
+
+# Plasmodium
+sum(malaria$screened_p == "Yes")   # How many screened
+sum(malaria$positive_p, na.rm = T) # How many positive 
+sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T)  # Co-infections
+(p_P <- 166 / 761)
+n_P <- 348
+ci_P.lower <- p_P - qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
+ci_P.upper <- p_P + qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
+cat("95% confidence interval: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
+```
+
+Leucocytozoon: [23.28%, 29.59%]
+Haemocrodius: [10.94%, 18.37%]
+Plasmodium: [17.47%, 26.15%]
+
+NOTE: Use bootstrapping to narrow confidence intervals
+
+
+
+*Among all birds screened*
+
+```{r}
+total_n <- 3418
+
+# Leucocytozoon
+num_screened_l <- sum(malaria$screened_l == "Yes")   # How many screened
+sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T)  # Co-infections
+(p2_L <- 198 / num_screened_l)
+ci2_L.lower <- p2_L - qnorm(0.975) * sqrt((p2_L * (1 - p2_L)) / num_screened_l)
+ci2_L.upper <- p2_L + qnorm(0.975) * sqrt((p2_L * (1 - p2_L)) / num_screened_l)
+cat("95% confidence interval: [", round(c(ci2_L.lower, ci2_L.upper)*100, 2), "]")
+
+# Haemocrodius
+sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T)  # Co-infections
+(p2_H <- 51 / total_n)
+ci2_H.lower <- p2_H - qnorm(0.975) * sqrt((p2_H * (1 - p2_H)) / total_n)
+ci2_H.upper <- p2_H + qnorm(0.975) * sqrt((p2_H * (1 - p2_H)) / total_n)
+cat("95% confidence interval: [", round(c(ci2_H.lower, ci2_H.upper)*100, 2), "]")
+
+# Plasmodium
+sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T)  # Co-infections
+(p2_P <- 166 / total_n)
+ci2_P.lower <- p2_P - qnorm(0.975) * sqrt((p2_P * (1 - p2_P)) / total_n)
+ci2_P.upper <- p2_P + qnorm(0.975) * sqrt((p2_P * (1 - p2_P)) / total_n)
+cat("95% confidence interval: [", round(c(ci2_P.lower, ci2_P.upper)*100, 2), "]")
+```
+
+Compare with using the negative binomial distribution for confidence intervals
+
+```{r}
+total_n <- 3418
+
+# Leucocytozoon
+sum(malaria$screened_l == "Yes")   # How many screened
+sum(malaria$positive_l, na.rm = T) # How many positive 
+sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T)  # Co-infections
+(p_L <- 198 / 749)
+n_L <- 749
+ci_L.lower <- p_L - qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
+ci_L.upper <- p_L + qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
+cat("95% confidence interval: [", round(c(ci_L.lower, ci_L.upper)*100, 2), "]")
+
+# Haemocrodius
+sum(malaria$screened_h == "Yes")   # How many screened
+sum(malaria$positive_h, na.rm = T) # How many positive 
+sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T)  # Co-infections
+(p_H <- 51 / 348)
+n_H <- 348
+ci_H.lower <- p_H - qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
+ci_H.upper <- p_H + qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
+cat("95% confidence interval: [", round(c(ci_H.lower, ci_H.upper)*100, 2), "]")
+
+# Plasmodium
+sum(malaria$screened_p == "Yes")   # How many screened
+sum(malaria$positive_p, na.rm = T) # How many positive 
+sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T)  # Co-infections
+(p_P <- 166 / 761)
+n_P <- 348
+ci_P.lower <- p_P - qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
+ci_P.upper <- p_P + qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
+cat("95% confidence interval: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
+```
+
+
+## 2. How often do co-infections occur between different genera of avian malarial pathogens?
+
+*Among birds that tested positive for malaria*
+
+```{r}
+sum(malaria$positive_l == 1 | malaria$positive_h == 1 | malaria$positive_p == 1, na.rm = T)
+sum((malaria$positive_l == 1 & malaria$positive_h == 1) | 
+    (malaria$positive_l == 1 & malaria$positive_p == 1) |
+    (malaria$positive_h == 1 & malaria$positive_p == 1), na.rm = T)
+p3 <- 306 / 1540
+ci3.lower <- p3 - qnorm(0.975) * sqrt((p3 * (1 - p3)) / screened_all)
+ci3.upper <- p3 + qnorm(0.975) * sqrt((p3 * (1 - p3)) / screened_all)
+cat("95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "]")
+```
+
+*Among all birds screened*
+
+```{r}
+screened_all <- 3086
+sum(malaria$posdesig_l == 4 | malaria$posdesig_h == 4 | malaria$posdesig_p == 4, na.rm = T)
+p4 <- 77 / screened_all
+ci4.lower <- p4 - qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
+ci4.upper <- p4 + qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
+cat("95% confidence interval: [", round(c(ci4.lower, ci4.upper)*100, 2), "]")
+```
+
+
+## 3. Are certain host birds more susceptible to co-infections than other hosts?
+
+Start by looking into: Species, genus, family level
+Remove groups that have less than 3 individuals, 5 individuals, 10 individuals - see what results look like
+Pseudo-count (for many zeros in data) - look into this
+Zero-inflated distributions, try other distributions
+
+OUTCOME VARIABLE: Co-infection present (binary)
+MODEL IDEAS:
+- multivariate logistic regression
+  + elastic net
+  + main outcome variable: species/genus/family (categorical)
+  + would need to remove groups with low counts, not enough confidence
+
+OUTCOME VARIABLE: Co-infection rate by species/genus/family
+MODEL IDEAS:
+- Clustering
+- Prediction of co-infection with random forest using family co-infection rate as predictor
+- Zero-inflated Beta regression
+
+Look into nested models... (but are there enough obs in genus, species?)
+
+```{r}
+length(unique(malaria$Host_family))
+length(unique(malaria$Host_genus))
+length(unique(malaria$Host_species))
+
+malaria %>% group_by(Host_family) %>% summarize(Count = n()) %>% arrange(desc(Count))
+malaria %>% group_by(Host_genus) %>% summarize(Count = n()) %>% arrange(desc(Count))
+malaria %>% group_by(Host_species) %>% summarize(Count = n()) %>% arrange(desc(Count))
+```
+
+## 4. Does the likelihood of co-infection vary by malaria lineages?
+
+```{r}
+
+```
+
