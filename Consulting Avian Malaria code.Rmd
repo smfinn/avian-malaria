@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 library(readxl)
 library(tidyverse)
+library(ggcorrplot)
 ```
 
 ```{r}
@@ -25,9 +26,11 @@ malaria <- malaria %>% rename(screened_l = `Screened for Leuco`,
                               posdesig_h = `Pos Designation...28`,
                               posdesig_p = `Pos Designation...34`)
 
-# Change elevation variable to numeric
+# Change elevation, latitude, and longitude variables to numeric
 malaria$Elevation <- str_remove_all(malaria$Elevation, "m")
 malaria$Elevation <- as.numeric(malaria$Elevation)
+malaria$Lat <- as.numeric(malaria$Lat)
+malaria$Long <- as.numeric(malaria$Long)
 
 # Standardize sex reporting
 malaria$Sex[malaria$Sex == "f"] <- "F"
@@ -37,6 +40,11 @@ malaria$Sex[malaria$Sex == "N"] <- "X"
 malaria$Sex[malaria$Sex == "0"] <- "X"
 malaria$Sex[malaria$Sex == "No BS"] <- "X"
 table(malaria$Sex)
+
+# Convert negative test results to zeros
+malaria <- malaria %>% mutate(positive_l = ifelse(is.na(positive_l), 0, 1),
+                              positive_h = ifelse(is.na(positive_h), 0, 1),
+                              positive_p = ifelse(is.na(positive_p), 0, 1))
 ```
 
 ## Exploratory Data Analysis
@@ -47,8 +55,15 @@ table(malaria$District)
 hist(malaria$Elevation)
 ```
 
-Boxplots by co-infection
-Map?
+```{r}
+elevation <- ggplot(malaria, aes(Elevation)) +
+  geom_histogram(bins = 15, fill = "forestgreen") +
+  labs(title = "Elevation of Avian Samples",
+       x = "Elevation", y = "Frequency") +
+  scale_x_continuous(limits = c(0, 3000)) +
+  theme_classic()
+elevation
+```
 
 
 ## 1. How often do co-infections occur within the same genera of avian malarial pathogens? 
@@ -83,7 +98,7 @@ sum(malaria$screened_p == "Yes")   # How many screened
 sum(malaria$positive_p, na.rm = T) # How many positive 
 sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T)  # Co-infections
 (p_P <- 166 / 761)
-n_P <- 348
+n_P <- 761
 ci_P.lower <- p_P - qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
 ci_P.upper <- p_P + qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
 cat("95% confidence interval: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
@@ -91,10 +106,14 @@ cat("95% confidence interval: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
 
 Leucocytozoon: [23.28%, 29.59%]
 Haemocrodius: [10.94%, 18.37%]
-Plasmodium: [17.47%, 26.15%]
+Plasmodium: [18.88%, 24.75%]
 
 NOTE: Use bootstrapping to narrow confidence intervals
 
+Boxplots by co-infection
+```{r}
+leuco_eda <- 
+```
 
 
 *Among all birds screened*
