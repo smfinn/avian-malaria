@@ -10,6 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readxl)
 library(tidyverse)
 library(ggcorrplot)
+library(grid)
+library(gridExtra)
 ```
 
 ```{r}
@@ -45,6 +47,9 @@ table(malaria$Sex)
 malaria <- malaria %>% mutate(positive_l = ifelse(is.na(positive_l), 0, 1),
                               positive_h = ifelse(is.na(positive_h), 0, 1),
                               positive_p = ifelse(is.na(positive_p), 0, 1))
+
+# Shorten Democratic Republic of the Congo
+malaria$Country[malaria$Country=="Democratic Republic Congo"] <- "DRC"
 ```
 
 ## Exploratory Data Analysis
@@ -63,6 +68,70 @@ elevation <- ggplot(malaria, aes(Elevation)) +
   scale_x_continuous(limits = c(0, 3000)) +
   theme_classic()
 elevation
+```
+
+Graphs by co-infection
+```{r}
+leuco.country <- as.data.frame(table(malaria$positive_l, malaria$Country))
+leuco_eda1 <- ggplot(leuco.country, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "stack") +
+  scale_fill_brewer() +
+  labs(title = "Stacked", x = "Country", y = "Frequency") +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 15),
+        title = element_text(size = 9))
+
+leuco_eda2 <- ggplot(leuco.country, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
+  scale_fill_brewer(name = "Positivity") +
+  labs(title = "Standardized (percent)", x = "Country", y = NULL) +
+  theme(axis.text.x = element_text(angle = 15),
+        title = element_text(size = 9))
+
+leuco_eda <- grid.arrange(leuco_eda1, leuco_eda2, nrow = 1, 
+             top = "Leucocytozoon Positivity by Country")
+```
+
+```{r}
+haemo.country <- as.data.frame(table(malaria$positive_h, malaria$Country))
+haemo_eda1 <- ggplot(haemo.country, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "stack") +
+  scale_fill_brewer(palette = 4) +
+  labs(title = "Stacked", x = "Country", y = "Frequency") +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 15),
+        title = element_text(size = 9))
+
+haemo_eda2 <- ggplot(haemo.country, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
+  scale_fill_brewer(palette = 4, name = "Positivity") +
+  labs(title = "Standardized (percent)", x = "Country", y = NULL) +
+  theme(axis.text.x = element_text(angle = 15),
+        title = element_text(size = 9))
+
+haemo_eda <- grid.arrange(haemo_eda1, haemo_eda2, nrow = 1, 
+             top = "Haemocrodius Positivity by Country")
+```
+
+```{r}
+plas.country <- as.data.frame(table(malaria$positive_p, malaria$Country))
+plas_eda1 <- ggplot(plas.country, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "stack") +
+  scale_fill_brewer(palette = 7) +
+  labs(title = "Stacked", x = "Country", y = "Frequency") +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 15),
+        title = element_text(size = 9))
+
+plas_eda2 <- ggplot(plas.country, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
+  scale_fill_brewer(palette = 7, name = "Positivity") +
+  labs(title = "Standardized (percent)", x = "Country", y = NULL) +
+  theme(axis.text.x = element_text(angle = 15),
+        title = element_text(size = 9))
+
+plas_eda <- grid.arrange(plas_eda1, plas_eda2, nrow = 1, 
+             top = "Plasmodium Positivity by Country")
 ```
 
 
@@ -109,11 +178,6 @@ Haemocrodius: [10.94%, 18.37%]
 Plasmodium: [18.88%, 24.75%]
 
 NOTE: Use bootstrapping to narrow confidence intervals
-
-Boxplots by co-infection
-```{r}
-leuco_eda <- 
-```
 
 
 *Among all birds screened*
