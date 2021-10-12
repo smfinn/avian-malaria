@@ -11,8 +11,6 @@ library(readxl)
 library(tidyverse)
 ```
 
-Read in the data 
-
 ```{r}
 malaria <- read_excel("MalariaSampling_MasterFile_Sept23.xlsx")
 
@@ -30,6 +28,15 @@ malaria <- malaria %>% rename(screened_l = `Screened for Leuco`,
 # Change elevation variable to numeric
 malaria$Elevation <- str_remove_all(malaria$Elevation, "m")
 malaria$Elevation <- as.numeric(malaria$Elevation)
+
+# Standardize sex reporting
+malaria$Sex[malaria$Sex == "f"] <- "F"
+malaria$Sex[malaria$Sex == "m"] <- "M"
+malaria$Sex[malaria$Sex == "?"] <- "X"
+malaria$Sex[malaria$Sex == "N"] <- "X"
+malaria$Sex[malaria$Sex == "0"] <- "X"
+malaria$Sex[malaria$Sex == "No BS"] <- "X"
+table(malaria$Sex)
 ```
 
 ## Exploratory Data Analysis
@@ -119,40 +126,6 @@ cat("95% confidence interval: [", round(c(ci2_P.lower, ci2_P.upper)*100, 2), "]"
 ```
 
 Compare with using the negative binomial distribution for confidence intervals
-
-```{r}
-total_n <- 3418
-
-# Leucocytozoon
-sum(malaria$screened_l == "Yes")   # How many screened
-sum(malaria$positive_l, na.rm = T) # How many positive 
-sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T)  # Co-infections
-(p_L <- 198 / 749)
-n_L <- 749
-ci_L.lower <- p_L - qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
-ci_L.upper <- p_L + qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
-cat("95% confidence interval: [", round(c(ci_L.lower, ci_L.upper)*100, 2), "]")
-
-# Haemocrodius
-sum(malaria$screened_h == "Yes")   # How many screened
-sum(malaria$positive_h, na.rm = T) # How many positive 
-sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T)  # Co-infections
-(p_H <- 51 / 348)
-n_H <- 348
-ci_H.lower <- p_H - qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
-ci_H.upper <- p_H + qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
-cat("95% confidence interval: [", round(c(ci_H.lower, ci_H.upper)*100, 2), "]")
-
-# Plasmodium
-sum(malaria$screened_p == "Yes")   # How many screened
-sum(malaria$positive_p, na.rm = T) # How many positive 
-sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T)  # Co-infections
-(p_P <- 166 / 761)
-n_P <- 348
-ci_P.lower <- p_P - qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
-ci_P.upper <- p_P + qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
-cat("95% confidence interval: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
-```
 
 
 ## 2. How often do co-infections occur between different genera of avian malarial pathogens?
