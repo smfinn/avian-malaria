@@ -480,28 +480,94 @@ cat("Plasmodium:", phat2PB, lowerhat2PB, upperhat2PB)
 
 ## 2. How often do co-infections occur between different genera of avian malarial pathogens?
 
-*Among birds that tested positive for malaria*
+#### *Among birds that tested positive for malaria*
 
 ```{r}
-sum(malaria$positive_l == 1 | malaria$positive_h == 1 | malaria$positive_p == 1, na.rm = T)
-sum((malaria$positive_l == 1 & malaria$positive_h == 1) | 
+infected_all <- sum(malaria$positive_l == 1 | 
+                    malaria$positive_h == 1 | 
+                    malaria$positive_p == 1, na.rm = T)
+coinfected_all <- sum((malaria$positive_l == 1 & malaria$positive_h == 1) | 
     (malaria$positive_l == 1 & malaria$positive_p == 1) |
     (malaria$positive_h == 1 & malaria$positive_p == 1), na.rm = T)
-p3 <- 306 / 1540
-ci3.lower <- p3 - qnorm(0.975) * sqrt((p3 * (1 - p3)) / screened_all)
-ci3.upper <- p3 + qnorm(0.975) * sqrt((p3 * (1 - p3)) / screened_all)
+p3 <- coinfected_all / infected_all
+ci3.lower <- p3 - qnorm(0.975) * sqrt((p3 * (1 - p3)) / infected_all)
+ci3.upper <- p3 + qnorm(0.975) * sqrt((p3 * (1 - p3)) / infected_all)
 cat("95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "]")
 ```
 
-*Among all birds screened*
+#### *Among all birds screened*
 
 ```{r}
-screened_all <- 3086
-sum(malaria$posdesig_l == 4 | malaria$posdesig_h == 4 | malaria$posdesig_p == 4, na.rm = T)
-p4 <- 77 / screened_all
+screened_all <- sum(malaria$screened_l=="Yes") # Leuco is only genus that didn't get tested for all birds
+p4 <- coinfected_all / screened_all
 ci4.lower <- p4 - qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
 ci4.upper <- p4 + qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
 cat("95% confidence interval: [", round(c(ci4.lower, ci4.upper)*100, 2), "]")
+```
+
+#### Bootstrapping: Among infected birds
+
+```{r}
+N <- 3418
+set.seed(94)
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+infectedB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+coinfectedB  <- rep(NA, nsim)
+pB  <- rep(NA, nsim)
+lowerB <- rep(NA, nsim)
+upperB <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  infectedB[i] <- sum(newB$positive_l == 1 | 
+                      newB$positive_h == 1 | 
+                      newB$positive_p == 1, na.rm = T)
+  coinfectedB[i] <- sum((newB$positive_l == 1 & newB$positive_h == 1) | 
+                        (newB$positive_l == 1 & newB$positive_p == 1) |
+                        (newB$positive_h == 1 & newB$positive_p == 1), na.rm = T)
+  pB[i] <- coinfectedB[i] / infectedB[i]
+  lowerB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / infectedB[i])
+  upperB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / infectedB[i])
+}
+
+phatB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatB <- mean(lowerB)
+upperhatB <- mean(upperB)
+
+cat("Among infected birds:", phatB, lowerhatB, upperhatB)
+```
+
+
+#### Bootstrapping: Among all birds screened
+
+```{r}
+N <- 3418
+set.seed(94)
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+infectedB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+coinfectedB  <- rep(NA, nsim)
+pB  <- rep(NA, nsim)
+lowerB <- rep(NA, nsim)
+upperB <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  screened_all <- sum(newB$screened_l=="Yes")
+  coinfectedB[i] <- sum((newB$positive_l == 1 & newB$positive_h == 1) | 
+                        (newB$positive_l == 1 & newB$positive_p == 1) |
+                        (newB$positive_h == 1 & newB$positive_p == 1), na.rm = T)
+  pB[i] <- coinfectedB[i] / screened_all
+  lowerB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / screened_all)
+  upperB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / screened_all)
+}
+
+phatB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatB <- mean(lowerB)
+upperhatB <- mean(upperB)
+
+cat("Among all birds screened:", phatB, lowerhatB, upperhatB)
 ```
 
 
