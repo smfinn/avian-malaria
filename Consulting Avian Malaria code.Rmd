@@ -6,13 +6,19 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(eval = FALSE)
 library(readxl)
 library(tidyverse)
 library(ggcorrplot)
 library(grid)
 library(gridExtra)
+theme_set(
+  theme_minimal()
+)
 ```
+
+$\hat\pi \pm z_{0.025} * \sqrt{\dfrac{\hat\pi * (1 - \hat\pi)}{n}}$
+
 
 ```{r}
 malaria <- read_excel("MalariaSampling_MasterFile_Sept23.xlsx")
@@ -54,6 +60,14 @@ malaria$Country[malaria$Country=="Democratic Republic Congo"] <- "DRC"
 # Create variable for positive result from any genus
 malaria$infected_any <- 0
 malaria$infected_any[malaria$positive_p == 1 | malaria$positive_l == 1 | malaria$positive_h == 1] <- 1
+
+# Create variables for within and between-genus co-infections
+malaria$leuco_coinf <- ifelse(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, 1, 0)
+malaria$haemo_coinf <- ifelse(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, 1, 0)
+malaria$plas_coinf <- ifelse(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, 1, 0)
+malaria$any_coinf_within <- ifelse(malaria$leuco_coinf == 1 | malaria$haemo_coinf == 1 | malaria$plas_coinf == 1,
+                            1, 0)
+malaria$any_coinf_between <- 
 ```
 
 ## Exploratory Data Analysis
@@ -267,6 +281,7 @@ cat("95% confidence interval: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
 Leucocytozoon: [23.28%, 29.59%]
 Haemocrodius: [10.94%, 18.37%]
 Plasmodium: [18.88%, 24.75%]
+
 
 ```{r}
 genera <- c("Leucocytozoon", "Haemocrodius", "Plasmodium")
@@ -605,7 +620,7 @@ OUTCOME VARIABLE: Co-infection present (binary)
 MODEL IDEAS:
 - multivariate logistic regression
   + elastic net
-  + main outcome variable: species/genus/family (categorical)
+  + main effect variable: species/genus/family (categorical)
   + would need to remove groups with low counts, not enough confidence
 
 OUTCOME VARIABLE: Co-infection rate by species/genus/family
@@ -617,14 +632,100 @@ MODEL IDEAS:
 Look into nested models... (but are there enough obs in genus, species?)
 
 ```{r}
+length(unique(malaria$Host_order))
 length(unique(malaria$Host_family))
 length(unique(malaria$Host_genus))
 length(unique(malaria$Host_species))
+length(unique(malaria$Host_subspp))
 
 malaria %>% group_by(Host_family) %>% summarize(Count = n()) %>% arrange(desc(Count))
 malaria %>% group_by(Host_genus) %>% summarize(Count = n()) %>% arrange(desc(Count))
 malaria %>% group_by(Host_species) %>% summarize(Count = n()) %>% arrange(desc(Count))
+
+sum(order_freqs$Freq >= 5)
+sum(family_freqs$Freq >= 5)
+sum(genus_freqs$Freq >= 5)
+sum(species_freqs$Freq >= 5)
 ```
+
+```{r}
+order_freqs <- as.data.frame(table(malaria$Host_order))
+family_freqs <- as.data.frame(table(malaria$Host_family))
+genus_freqs <- as.data.frame(table(malaria$Host_genus))
+species_freqs <- as.data.frame(table(malaria$Host_species))
+
+order_hist <- ggplot(order_freqs, aes(Freq)) +
+              geom_histogram(bins = 20, fill = "#98cd59") +
+              labs(x = "Order", y = NULL) +
+              theme(axis.title.y = element_text(size = 12))
+family_hist <- ggplot(family_freqs, aes(Freq)) +
+              geom_histogram(bins = 20, fill = "#2ebd63") +
+              labs(x = "Family", y = NULL) +
+              scale_x_continuous(limits = c(0,450)) +
+              scale_y_continuous(limits = c(0,11)) +
+              theme(axis.title.y = element_text(size = 12))
+genus_hist <- ggplot(genus_freqs, aes(Freq)) +
+              geom_histogram(bins = 20, fill = "#10b7e5") +
+              labs(x = "Genus", y = NULL) +
+              scale_x_continuous(limits = c(0,450)) +
+              scale_y_continuous(limits = c(0,45)) +
+              theme(axis.title.y = element_text(size = 12))
+species_hist <- ggplot(species_freqs, aes(Freq)) +
+              geom_histogram(bins = 20, fill = "#0f8ac7") +
+              labs(x = "Species", y = NULL) +
+              scale_x_continuous(limits = c(0,450)) +
+              scale_y_continuous(limits = c(0,70)) +
+              theme(axis.title.y = element_text(size = 12))
+
+tax_freq_hists <- grid.arrange(order_hist, family_hist, genus_hist, species_hist,
+                               ncol = 1)
+ggsave("taxonomical frequencies.png", tax_freq_hists, height = 4, width = 3)
+```
+
+#### Logistic regression: All orders, families, genera
+```{r}
+# Leucocytozoon
+Lglm1 <- glm(leuco_coinf ~ Host_order, data = malaria, family = binomial)
+summary(Lglm1)
+
+Lglm2 <- glm(leuco_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Lglm2)
+
+Lglm3 <- glm(leuco_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Lglm3)
+
+# Haemocrodius
+Hglm1 <- glm(haemo_coinf ~ Host_order, data = malaria, family = binomial)
+summary(Hglm1)
+
+Hglm2 <- glm(haemo_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Hglm2)
+
+Hglm3 <- glm(haemo_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Hglm3)
+
+# Plasmodium
+Pglm1 <- glm(plas_coinf ~ Host_order, data = malaria, family = binomial)
+summary(Pglm1)
+
+Pglm2 <- glm(plas_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Pglm2)
+
+Pglm3 <- glm(plas_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Pglm3)
+
+# Any infection
+Aglm1 <- glm(any_coinf_within ~ Host_order, data = malaria, family = binomial)
+summary(Aglm1)
+
+Aglm2 <- glm(any_coinf_within ~ Host_family, data = malaria, family = binomial)
+summary(Aglm2)
+
+Aglm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
+summary(Aglm3)
+
+```
+
 
 ## 4. Does the likelihood of co-infection vary by malaria lineages?
 
