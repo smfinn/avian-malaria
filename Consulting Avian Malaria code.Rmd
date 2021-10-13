@@ -329,7 +329,75 @@ Compare with using the negative binomial distribution for confidence intervals
 #### Bootstrapping: Among infected birds
 
 ```{r}
+N <- 3418
+set.seed(94)
 
+## Leucocytozoon
+p_L
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_l == 2 | newB$posdesig_l == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+              sum(newB$positive_l, na.rm = T)
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_l, na.rm = T)) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_l, na.rm = T))
+}
+
+phatLB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatLB <- mean(lowerciB)
+upperhatLB <- mean(upperciB)
+
+cat("Leuco:", phatLB, lowerhatLB, upperhatLB)
+
+## Haemocrodius
+p_H
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_h == 2 | newB$posdesig_h == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+              sum(newB$positive_h, na.rm = T)
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_h, na.rm = T)) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_h, na.rm = T))
+}
+
+phatHB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatHB <- mean(lowerciB)
+upperhatHB <- mean(upperciB)
+
+cat("Haemo:", phatHB, lowerhatHB, upperhatHB)
+
+
+## Plasmodium
+p_P
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_p == 2 | newB$posdesig_p == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+              sum(newB$positive_p, na.rm = T)
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_p, na.rm = T)) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_p, na.rm = T))
+}
+
+phatPB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatPB <- mean(lowerciB)
+upperhatPB <- mean(upperciB)
+
+cat("Plasmodium:", phatPB, lowerhatPB, upperhatPB)
 ```
 
 
@@ -337,7 +405,75 @@ Compare with using the negative binomial distribution for confidence intervals
 #### Bootstrapping: Among screened birds
 
 ```{r}
+N <- 3418
+set.seed(94)
 
+## Leucocytozoon
+p2_L
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_l == 2 | newB$posdesig_l == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+               sum(malaria$screened_l == "Yes")
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_l == "Yes")) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_l == "Yes"))
+}
+
+phat2LB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhat2LB <- mean(lowerciB)
+upperhat2LB <- mean(upperciB)
+
+cat("Leuco:", phat2LB, lowerhat2LB, upperhat2LB)
+
+## Haemocrodius
+p2_H
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_h == 2 | newB$posdesig_h == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+               sum(malaria$screened_h == "Yes")
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_h == "Yes")) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_h == "Yes"))
+}
+
+phat2HB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhat2HB <- mean(lowerciB)
+upperhat2HB <- mean(upperciB)
+
+cat("Haemo:", phat2HB, lowerhat2HB, upperhat2HB)
+
+
+## Plasmodium
+p2_P
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_p == 2 | newB$posdesig_p == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+               sum(malaria$screened_p == "Yes")
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_p == "Yes")) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_p == "Yes"))
+}
+
+phat2PB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhat2PB <- mean(lowerciB)
+upperhat2PB <- mean(upperciB)
+
+cat("Plasmodium:", phat2PB, lowerhat2PB, upperhat2PB)
 ```
 
 
