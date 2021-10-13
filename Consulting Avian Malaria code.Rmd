@@ -70,7 +70,7 @@ elevation <- ggplot(malaria, aes(Elevation)) +
 elevation
 ```
 
-Graphs by co-infection
+#### Infections by country
 ```{r}
 leuco.country <- as.data.frame(table(malaria$positive_l, malaria$Country))
 leuco_eda1 <- ggplot(leuco.country, aes(Var2, Freq, group = Var1)) +
@@ -90,6 +90,7 @@ leuco_eda2 <- ggplot(leuco.country, aes(Var2, Freq, group = Var1)) +
 
 leuco_eda <- grid.arrange(leuco_eda1, leuco_eda2, nrow = 1, 
              top = "Leucocytozoon Positivity by Country")
+ggsave("leucocytozoon by country.png", leuco_eda, width = 7, height = 4)
 ```
 
 ```{r}
@@ -111,6 +112,7 @@ haemo_eda2 <- ggplot(haemo.country, aes(Var2, Freq, group = Var1)) +
 
 haemo_eda <- grid.arrange(haemo_eda1, haemo_eda2, nrow = 1, 
              top = "Haemocrodius Positivity by Country")
+ggsave("haemocrodius by country.png", haemo_eda, width = 7, height = 4)
 ```
 
 ```{r}
@@ -132,12 +134,78 @@ plas_eda2 <- ggplot(plas.country, aes(Var2, Freq, group = Var1)) +
 
 plas_eda <- grid.arrange(plas_eda1, plas_eda2, nrow = 1, 
              top = "Plasmodium Positivity by Country")
+ggsave("plasmodium by country.png", plas_eda, width = 7, height = 4)
+```
+
+#### Infections by sex
+```{r}
+leuco.sex <- as.data.frame(table(malaria$positive_l[malaria$Sex != "X"], 
+                                 malaria$Sex[malaria$Sex != "X"]))
+leuco_eda3 <- ggplot(leuco.sex, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "stack") +
+  scale_fill_brewer() +
+  labs(title = "Stacked", x = "Sex", y = "Frequency") +
+  theme(legend.position = "none", 
+        title = element_text(size = 9))
+
+leuco_eda4 <- ggplot(leuco.sex, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
+  scale_fill_brewer(name = "Positivity") +
+  labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
+  theme(title = element_text(size = 9))
+
+leuco_eda_sex <- grid.arrange(leuco_eda3, leuco_eda4, nrow = 1, 
+             top = "Leucocytozoon Positivity by Sex")
+
+ggsave("leucocytozoon by sex.png", leuco_eda_sex, width = 4, height = 3)
+```
+
+```{r}
+haemo.sex <- as.data.frame(table(malaria$positive_h[malaria$Sex != "X"], 
+                                 malaria$Sex[malaria$Sex != "X"]))
+haemo_eda3 <- ggplot(haemo.sex, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "stack") +
+  scale_fill_brewer(palette = 4) +
+  labs(title = "Stacked", x = "Sex", y = "Frequency") +
+  theme(legend.position = "none", 
+        title = element_text(size = 9))
+
+haemo_eda4 <- ggplot(haemo.sex, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
+  scale_fill_brewer(palette = 4, name = "Positivity") +
+  labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
+  theme(title = element_text(size = 9))
+
+haemo_eda_sex <- grid.arrange(haemo_eda3, haemo_eda4, nrow = 1, 
+             top = "Haemocrodius Positivity by Sex")
+ggsave("haemocrodius by sex.png", haemo_eda_sex, width = 4, height = 3)
+```
+
+```{r}
+plas.sex <- as.data.frame(table(malaria$positive_p[malaria$Sex != "X"], 
+                                 malaria$Sex[malaria$Sex != "X"]))
+plas_eda3 <- ggplot(plas.sex, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "stack") +
+  scale_fill_brewer(palette = 7) +
+  labs(title = "Stacked", x = "Sex", y = "Frequency") +
+  theme(legend.position = "none", 
+        title = element_text(size = 9))
+
+plas_eda4 <- ggplot(plas.sex, aes(Var2, Freq, group = Var1)) +
+  geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
+  scale_fill_brewer(palette = 7, name = "Positivity") +
+  labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
+  theme(title = element_text(size = 9))
+
+plas_eda_sex <- grid.arrange(plas_eda3, plas_eda4, nrow = 1, 
+             top = "Plasmodium Positivity by Sex")
+ggsave("plasmodium by sex.png", plas_eda_sex, width = 4, height = 3)
 ```
 
 
 ## 1. How often do co-infections occur within the same genera of avian malarial pathogens? 
 
-*Among birds who are infected*
+#### *Among birds who are infected*
 
 ```{r}
 total_n <- 3418
@@ -177,10 +245,33 @@ Leucocytozoon: [23.28%, 29.59%]
 Haemocrodius: [10.94%, 18.37%]
 Plasmodium: [18.88%, 24.75%]
 
-NOTE: Use bootstrapping to narrow confidence intervals
+```{r}
+genera <- c("Leucocytozoon", "Haemocrodius", "Plasmodium")
+y <- c(p_L*100, p_H*100, p_P*100)
+ymin <- c(ci_L.lower*100, ci_H.lower*100, ci_P.lower*100)
+ymax <- c(ci_L.upper*100, ci_H.upper*100, ci_P.upper*100)
+wald_boxes <- as.data.frame(cbind(genera, y, ymin, ymax))
+wald_boxes <- wald_boxes %>% mutate(y = as.numeric(y),
+                                    ymin = as.numeric(ymin),
+                                    ymax = as.numeric(ymax))
+
+wald_boxes_chart <- ggplot(wald_boxes, aes(genera, y)) +
+  geom_pointrange(aes(x = genera, y = y, ymin = ymin, ymax = ymax,
+                      color = genera),
+                  fatten = 2.5, size = 1.5) +
+  scale_y_continuous(limits = c(0, 30)) +
+  scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
+  theme(legend.position = "none") +
+  labs(title = "Frequency of Malaria Infection Frequency by Genus", 
+       subtitle = "Among birds infected with genus",
+       x = "Genus", y = "Percent of birds infected")
+wald_boxes_chart
+
+ggsave("frequency by genus1.png", wald_boxes_chart, height = 4.5, width = 5)
+```
 
 
-*Among all birds screened*
+#### *Among all birds screened*
 
 ```{r}
 total_n <- 3418
@@ -208,7 +299,47 @@ ci2_P.upper <- p2_P + qnorm(0.975) * sqrt((p2_P * (1 - p2_P)) / total_n)
 cat("95% confidence interval: [", round(c(ci2_P.lower, ci2_P.upper)*100, 2), "]")
 ```
 
+```{r}
+genera <- c("Leucocytozoon", "Haemocrodius", "Plasmodium")
+y2 <- c(p2_L*100, p2_H*100, p2_P*100)
+ymin2 <- c(ci2_L.lower*100, ci2_H.lower*100, ci2_P.lower*100)
+ymax2 <- c(ci2_L.upper*100, ci2_H.upper*100, ci2_P.upper*100)
+wald_boxes2 <- as.data.frame(cbind(genera, y2, ymin2, ymax2))
+wald_boxes2 <- wald_boxes %>% mutate(y = as.numeric(y2),
+                                    ymin = as.numeric(ymin2),
+                                    ymax = as.numeric(ymax2))
+
+wald_boxes_chart2 <- ggplot(wald_boxes2, aes(genera, y)) +
+  geom_pointrange(aes(x = genera, y = y, ymin = ymin, ymax = ymax,
+                      color = genera),
+                  fatten = 2.5, size = 1.5) +
+  scale_y_continuous(limits = c(0, 8)) +
+  scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
+  theme(legend.position = "none") +
+  labs(title = "Frequency of Malaria Infection Frequency by Genus", 
+       subtitle = "Among birds screened for genus", 
+       x = "Genus", y = "Percent of birds infected")
+wald_boxes_chart2
+
+ggsave("frequency by genus2.png", wald_boxes_chart2, height = 4.5, width = 5)
+```
+
 Compare with using the negative binomial distribution for confidence intervals
+
+#### Bootstrapping: Among infected birds
+
+```{r}
+
+```
+
+
+
+#### Bootstrapping: Among screened birds
+
+```{r}
+
+```
+
 
 
 ## 2. How often do co-infections occur between different genera of avian malarial pathogens?
