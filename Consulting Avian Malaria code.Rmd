@@ -12,6 +12,8 @@ library(tidyverse)
 library(ggcorrplot)
 library(grid)
 library(gridExtra)
+library(cluster)
+library(gmodels)
 theme_set(
   theme_minimal()
 )
@@ -20,7 +22,7 @@ theme_set(
 $\hat\pi \pm z_{0.025} * \sqrt{\dfrac{\hat\pi * (1 - \hat\pi)}{n}}$
 
 
-```{r}
+```{r clean}
 malaria <- read_excel("MalariaSampling_MasterFile_Sept23.xlsx")
 
 # Rename long variables
@@ -52,7 +54,10 @@ table(malaria$Sex)
 # Convert negative test results to zeros
 malaria <- malaria %>% mutate(positive_l = ifelse(is.na(positive_l), 0, 1),
                               positive_h = ifelse(is.na(positive_h), 0, 1),
-                              positive_p = ifelse(is.na(positive_p), 0, 1))
+                              positive_p = ifelse(is.na(positive_p), 0, 1),
+                              posdesig_l = ifelse(is.na(posdesig_l), 0, posdesig_l),
+                              posdesig_h = ifelse(is.na(posdesig_h), 0, posdesig_h),
+                              posdesig_p = ifelse(is.na(posdesig_p), 0, posdesig_p))
 
 # Shorten Democratic Republic of the Congo (for visualizations)
 malaria$Country[malaria$Country=="Democratic Republic Congo"] <- "DRC"
@@ -67,7 +72,71 @@ malaria$haemo_coinf <- ifelse(malaria$posdesig_h == 2 | malaria$posdesig_h == 3,
 malaria$plas_coinf <- ifelse(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, 1, 0)
 malaria$any_coinf_within <- ifelse(malaria$leuco_coinf == 1 | malaria$haemo_coinf == 1 | malaria$plas_coinf == 1,
                             1, 0)
-malaria$any_coinf_between <- 
+malaria$any_coinf_between <- ifelse((
+  (malaria$positive_l == 1 & malaria$positive_h == 1) | 
+  (malaria$positive_l == 1 & malaria$positive_p == 1) |
+  (malaria$positive_h == 1 & malaria$positive_p == 1)), 1, 0)
+
+# Store numbers related to any malaria infection, co-infection, and screening
+infected_all <- sum(malaria$positive_l == 1 | 
+                    malaria$positive_h == 1 | 
+                    malaria$positive_p == 1, na.rm = T)
+coinfected_all <- sum((malaria$positive_l == 1 & malaria$positive_h == 1) | 
+    (malaria$positive_l == 1 & malaria$positive_p == 1) |
+    (malaria$positive_h == 1 & malaria$positive_p == 1), na.rm = T)
+screened_all <- sum(malaria$screened_l=="Yes")
+
+# Find co-infection rates by taxonomic groups
+co <- as.data.frame(table(malaria$Host_order, malaria$any_coinf_within))
+cb <- as.data.frame(table(malaria$Host_order, malaria$any_coinf_between))
+coinf_order <- data.frame(Host_order = co$Var1[co$Var2==0],
+                          yes.w = as.numeric(co$Freq[co$Var2==1]),
+                          no.w = as.numeric(co$Freq[co$Var2==0]),
+                          yes.b = as.numeric(cb$Freq[co$Var2==1]),
+                          no.b = as.numeric(cb$Freq[co$Var2==0]))
+coinf_order$coinf_within_order <- coinf_order$yes.w / (coinf_order$yes.w + coinf_order$no.w)
+coinf_order$coinf_between_order <- coinf_order$yes.b / (coinf_order$yes.b + coinf_order$no.b)
+coinf_order <- coinf_order[,c("Host_order", "coinf_within_order", "coinf_between_order")]
+
+co <- as.data.frame(table(malaria$Host_family, malaria$any_coinf_within))
+cb <- as.data.frame(table(malaria$Host_family, malaria$any_coinf_between))
+coinf_family <- data.frame(Host_family = co$Var1[co$Var2==0],
+                          yes.w = as.numeric(co$Freq[co$Var2==1]),
+                          no.w = as.numeric(co$Freq[co$Var2==0]),
+                          yes.b = as.numeric(cb$Freq[co$Var2==1]),
+                          no.b = as.numeric(cb$Freq[co$Var2==0]))
+coinf_family$coinf_within_family <- coinf_family$yes.w / (coinf_family$yes.w + coinf_family$no.w)
+coinf_family$coinf_between_family <- coinf_family$yes.b / (coinf_family$yes.b + coinf_family$no.b)
+coinf_family <- coinf_family[,c("Host_family", "coinf_within_family", "coinf_between_family")]
+
+co <- as.data.frame(table(malaria$Host_genus, malaria$any_coinf_within))
+cb <- as.data.frame(table(malaria$Host_genus, malaria$any_coinf_between))
+coinf_genus <- data.frame(Host_genus = co$Var1[co$Var2==0],
+                          yes.w = as.numeric(co$Freq[co$Var2==1]),
+                          no.w = as.numeric(co$Freq[co$Var2==0]),
+                          yes.b = as.numeric(cb$Freq[co$Var2==1]),
+                          no.b = as.numeric(cb$Freq[co$Var2==0]))
+coinf_genus$coinf_within_genus <- coinf_genus$yes.w / (coinf_genus$yes.w + coinf_genus$no.w)
+coinf_genus$coinf_between_genus <- coinf_genus$yes.b / (coinf_genus$yes.b + coinf_genus$no.b)
+coinf_genus <- coinf_genus[,c("Host_genus", "coinf_within_genus", "coinf_between_genus")]
+
+co <- as.data.frame(table(malaria$Host_species, malaria$any_coinf_within))
+cb <- as.data.frame(table(malaria$Host_species, malaria$any_coinf_between))
+coinf_species <- data.frame(Host_species = co$Var1[co$Var2==0],
+                          yes.w = as.numeric(co$Freq[co$Var2==1]),
+                          no.w = as.numeric(co$Freq[co$Var2==0]),
+                          yes.b = as.numeric(cb$Freq[co$Var2==1]),
+                          no.b = as.numeric(cb$Freq[co$Var2==0]))
+coinf_species$coinf_within_species <- coinf_species$yes.w / (coinf_species$yes.w + coinf_species$no.w)
+coinf_species$coinf_between_species <- coinf_species$yes.b / (coinf_species$yes.b + coinf_species$no.b)
+coinf_species <- coinf_species[,c("Host_species", "coinf_within_species", "coinf_between_species")]
+
+# Add co-infection rates to main data frame
+malaria <- merge(malaria, coinf_order, by = "Host_order")
+malaria <- merge(malaria, coinf_family, by = "Host_family")
+malaria <- merge(malaria, coinf_genus, by = "Host_genus")
+malaria <- merge(malaria, coinf_species, by = "Host_species")
+
 ```
 
 ## Exploratory Data Analysis
@@ -308,7 +377,6 @@ wald_boxes_chart
 ggsave("frequency by genus1.png", wald_boxes_chart, height = 4.5, width = 5)
 ```
 
-
 #### *Among all birds screened*
 
 ```{r}
@@ -437,8 +505,6 @@ upperhatPB <- mean(upperciB)
 
 cat("Plasmodium:", phatPB, lowerhatPB, upperhatPB)
 ```
-
-
 
 #### Bootstrapping: Among screened birds
 
@@ -631,29 +697,56 @@ MODEL IDEAS:
 
 Look into nested models... (but are there enough obs in genus, species?)
 
+CLUSTERING:
+* k-means clustering
+
 ```{r}
+# Number of unique taxonomic groups by level
 length(unique(malaria$Host_order))
 length(unique(malaria$Host_family))
 length(unique(malaria$Host_genus))
 length(unique(malaria$Host_species))
 length(unique(malaria$Host_subspp))
 
+# Tables of taxonomic groups by frequency
 malaria %>% group_by(Host_family) %>% summarize(Count = n()) %>% arrange(desc(Count))
 malaria %>% group_by(Host_genus) %>% summarize(Count = n()) %>% arrange(desc(Count))
 malaria %>% group_by(Host_species) %>% summarize(Count = n()) %>% arrange(desc(Count))
 
-sum(order_freqs$Freq >= 5)
-sum(family_freqs$Freq >= 5)
-sum(genus_freqs$Freq >= 5)
-sum(species_freqs$Freq >= 5)
-```
-
-```{r}
+# Convert number of groups by taxonomic level to data frames
 order_freqs <- as.data.frame(table(malaria$Host_order))
 family_freqs <- as.data.frame(table(malaria$Host_family))
 genus_freqs <- as.data.frame(table(malaria$Host_genus))
 species_freqs <- as.data.frame(table(malaria$Host_species))
 
+# Create reduced version of data frames with counts of at least X!!!!![update me]
+min <- 10
+order_reduced <- order_freqs[order_freqs$Freq >= min,]
+family_reduced <- family_freqs[family_freqs$Freq >= min,]
+genus_reduced <- genus_freqs[genus_freqs$Freq >= min,]
+species_reduced <- species_freqs[species_freqs$Freq >= min,]
+
+# Prepare data for chi-squared test tables
+Xdata_order <- malaria[malaria$Host_order %in% order_reduced$Var1,]
+Xdata_family <- malaria[malaria$Host_family %in% family_reduced$Var1,]
+Xdata_genus <- malaria[malaria$Host_genus %in% genus_reduced$Var1,]
+Xdata_species <- malaria[malaria$Host_species %in% species_reduced$Var1,]
+
+# Look at tables for chi-squared tests - within-genus co-infection
+table(Xdata_order$Host_order, Xdata_order$any_coinf_within)
+table(Xdata_family$Host_family, Xdata_family$any_coinf_within)
+table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_within)
+table(Xdata_species$Host_species, Xdata_species$any_coinf_within)
+
+# Look at tables for chi-squared tests - between-genus co-infection
+table(Xdata_order$Host_order, Xdata_order$any_coinf_between)
+table(Xdata_family$Host_family, Xdata_family$any_coinf_between)
+table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_between)
+table(Xdata_species$Host_species, Xdata_species$any_coinf_between)
+
+```
+
+```{r}
 order_hist <- ggplot(order_freqs, aes(Freq)) +
               geom_histogram(bins = 20, fill = "#98cd59") +
               labs(x = "Order", y = NULL) +
@@ -685,7 +778,7 @@ ggsave("taxonomical frequencies.png", tax_freq_hists, height = 4, width = 3)
 #### Logistic regression: All orders, families, genera
 ```{r}
 # Leucocytozoon
-Lglm1 <- glm(leuco_coinf ~ Host_order, data = malaria, family = binomial)
+Lglm1 <- glm(leuco_coinf ~ I(Host_order), data = malaria, family = binomial)
 summary(Lglm1)
 
 Lglm2 <- glm(leuco_coinf ~ Host_family, data = malaria, family = binomial)
@@ -724,6 +817,25 @@ summary(Aglm2)
 Aglm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
 summary(Aglm3)
 
+```
+
+#### k-means Clustering
+```{r}
+any_coinf_order <- as.data.frame(prop.table(
+  table(malaria$Host_order, malaria$any_coinf_within), 1))
+any_coinf_order <- any_coinf_order[any_coinf_order$Var2=="1", c("Var1", "Freq")]
+colnames(any_coinf_order) <- c("Order", "p_coinf")
+kmeans(any_coinf_order$p_coinf, centers = 3)
+plot(any_coinf_order$p_coinf, col = cl$cluster)
+
+any_coinf_species <- as.data.frame(prop.table(
+  table(malaria$Host_species, malaria$any_coinf_within), 1))
+any_coinf_species <- any_coinf_species[any_coinf_species$Var2=="1", c("Var1", "Freq")]
+colnames(any_coinf_species) <- c("Species", "p_coinf")
+kmeans(any_coinf_species$p_coinf, centers = 3)
+plot(any_coinf_species$p_coinf, cl$cluster)
+
+Xsq <- chisq.test(table(malaria$Host_order, malaria$any_coinf_within))
 ```
 
 
