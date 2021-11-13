@@ -719,8 +719,8 @@ family_freqs <- as.data.frame(table(malaria$Host_family))
 genus_freqs <- as.data.frame(table(malaria$Host_genus))
 species_freqs <- as.data.frame(table(malaria$Host_species))
 
-# Create reduced version of data frames with counts of at least X!!!!![update me]
-min <- 10
+# Create reduced version of data frames with counts of at least [update me to be different for each of the taxa]
+min <- 50
 order_reduced <- order_freqs[order_freqs$Freq >= min,]
 family_reduced <- family_freqs[family_freqs$Freq >= min,]
 genus_reduced <- genus_freqs[genus_freqs$Freq >= min,]
@@ -746,7 +746,7 @@ table(Xdata_species$Host_species, Xdata_species$any_coinf_between)
 
 ```
 
-```{r}
+```{r taxa.hists}
 order_hist <- ggplot(order_freqs, aes(Freq)) +
               geom_histogram(bins = 20, fill = "#98cd59") +
               labs(x = "Order", y = NULL) +
@@ -773,6 +773,21 @@ species_hist <- ggplot(species_freqs, aes(Freq)) +
 tax_freq_hists <- grid.arrange(order_hist, family_hist, genus_hist, species_hist,
                                ncol = 1)
 ggsave("taxonomical frequencies.png", tax_freq_hists, height = 4, width = 3)
+```
+
+```{r}
+# Chi-squared tests - within-genus co-infection
+(Xwithin.order <-   chisq.test(table(Xdata_order$Host_order, Xdata_order$any_coinf_within)))
+(Xwithin.family <-  chisq.test(table(Xdata_family$Host_family, Xdata_family$any_coinf_within)))
+(Xwithin.genus <-   chisq.test(table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_within)))
+(Xwithin.species <- chisq.test(table(Xdata_species$Host_species, Xdata_species$any_coinf_within)))
+
+# Chi-squared tests - between-genus co-infection
+(Xbetween.order <-   chisq.test(table(Xdata_order$Host_order, Xdata_order$any_coinf_between)))
+(Xbetween.family <-  chisq.test(table(Xdata_family$Host_family, Xdata_family$any_coinf_between)))
+(Xbetween.genus <-   chisq.test(table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_between)))
+(Xbetween.species <- chisq.test(table(Xdata_species$Host_species, Xdata_species$any_coinf_between)))
+
 ```
 
 #### Logistic regression: All orders, families, genera
