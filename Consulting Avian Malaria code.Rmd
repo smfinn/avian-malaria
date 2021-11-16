@@ -840,8 +840,8 @@ any_coinf_order <- as.data.frame(prop.table(
   table(malaria$Host_order, malaria$any_coinf_within), 1))
 any_coinf_order <- any_coinf_order[any_coinf_order$Var2=="1", c("Var1", "Freq")]
 colnames(any_coinf_order) <- c("Order", "p_coinf")
-kmeans(any_coinf_order$p_coinf, centers = 3)
-plot(any_coinf_order$p_coinf, col = cl$cluster)
+(cluster1 <- kmeans(any_coinf_order$p_coinf, centers = 3))
+plot(any_coinf_order$p_coinf, col = cluster1$cluster)
 
 any_coinf_species <- as.data.frame(prop.table(
   table(malaria$Host_species, malaria$any_coinf_within), 1))
@@ -850,7 +850,6 @@ colnames(any_coinf_species) <- c("Species", "p_coinf")
 kmeans(any_coinf_species$p_coinf, centers = 3)
 plot(any_coinf_species$p_coinf, cl$cluster)
 
-Xsq <- chisq.test(table(malaria$Host_order, malaria$any_coinf_within))
 ```
 
 
