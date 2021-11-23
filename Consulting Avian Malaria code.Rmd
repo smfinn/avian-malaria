@@ -1,7 +1,7 @@
 ---
 title: "Consulting Avian Malaria"
 author: "Sean Finn & Evelyn Lupancu"
-date: "Updated 11/10/2021"
+date: "Updated 11/23/2021"
 output: pdf_document
 ---
 
@@ -86,7 +86,7 @@ coinfected_all <- sum((malaria$positive_l == 1 & malaria$positive_h == 1) |
     (malaria$positive_h == 1 & malaria$positive_p == 1), na.rm = T)
 screened_all <- sum(malaria$screened_l=="Yes")
 
-# Find co-infection rates by taxonomic groups
+# Find co-infection rates by order
 co <- as.data.frame(table(malaria$Host_order, malaria$any_coinf_within))
 cb <- as.data.frame(table(malaria$Host_order, malaria$any_coinf_between))
 coinf_order <- data.frame(Host_order = co$Var1[co$Var2==0],
@@ -98,6 +98,7 @@ coinf_order$coinf_within_order <- coinf_order$yes.w / (coinf_order$yes.w + coinf
 coinf_order$coinf_between_order <- coinf_order$yes.b / (coinf_order$yes.b + coinf_order$no.b)
 coinf_order <- coinf_order[,c("Host_order", "coinf_within_order", "coinf_between_order")]
 
+# Find co-infection rates by family
 co <- as.data.frame(table(malaria$Host_family, malaria$any_coinf_within))
 cb <- as.data.frame(table(malaria$Host_family, malaria$any_coinf_between))
 coinf_family <- data.frame(Host_family = co$Var1[co$Var2==0],
@@ -109,6 +110,7 @@ coinf_family$coinf_within_family <- coinf_family$yes.w / (coinf_family$yes.w + c
 coinf_family$coinf_between_family <- coinf_family$yes.b / (coinf_family$yes.b + coinf_family$no.b)
 coinf_family <- coinf_family[,c("Host_family", "coinf_within_family", "coinf_between_family")]
 
+# Find co-infection rates by genus
 co <- as.data.frame(table(malaria$Host_genus, malaria$any_coinf_within))
 cb <- as.data.frame(table(malaria$Host_genus, malaria$any_coinf_between))
 coinf_genus <- data.frame(Host_genus = co$Var1[co$Var2==0],
@@ -120,6 +122,7 @@ coinf_genus$coinf_within_genus <- coinf_genus$yes.w / (coinf_genus$yes.w + coinf
 coinf_genus$coinf_between_genus <- coinf_genus$yes.b / (coinf_genus$yes.b + coinf_genus$no.b)
 coinf_genus <- coinf_genus[,c("Host_genus", "coinf_within_genus", "coinf_between_genus")]
 
+# Find co-infection rates by species
 co <- as.data.frame(table(malaria$Host_species, malaria$any_coinf_within))
 cb <- as.data.frame(table(malaria$Host_species, malaria$any_coinf_between))
 coinf_species <- data.frame(Host_species = co$Var1[co$Var2==0],
@@ -136,6 +139,42 @@ malaria <- merge(malaria, coinf_order, by = "Host_order")
 malaria <- merge(malaria, coinf_family, by = "Host_family")
 malaria <- merge(malaria, coinf_genus, by = "Host_genus")
 malaria <- merge(malaria, coinf_species, by = "Host_species")
+
+# Convert number of groups by taxonomic level to data frames
+order_freqs <- as.data.frame(table(malaria$Host_order))
+family_freqs <- as.data.frame(table(malaria$Host_family))
+genus_freqs <- as.data.frame(table(malaria$Host_genus))
+species_freqs <- as.data.frame(table(malaria$Host_species))
+
+# Create reduced version of data frames with counts of at least
+order_reduced_within <- order_freqs[order_freqs$Freq >= 25,]
+family_reduced_within <- family_freqs[family_freqs$Freq >= 40,]
+genus_reduced_within <- genus_freqs[genus_freqs$Freq >= 40,]
+species_reduced_within <- species_freqs[species_freqs$Freq >= 60,]
+
+order_reduced_between <- order_freqs[order_freqs$Freq >= 50,]
+family_reduced_between <- family_freqs[family_freqs$Freq >= 55,]
+genus_reduced_between <- genus_freqs[genus_freqs$Freq >= 55,]
+species_reduced_between <- species_freqs[species_freqs$Freq >= 75,]
+
+# Prepare data for chi-squared test tables
+Xdata_order_within <- malaria[malaria$Host_order %in% order_reduced_within$Var1,]
+Xdata_family_within <- malaria[malaria$Host_family %in% family_reduced_within$Var1,]
+Xdata_genus_within <- malaria[malaria$Host_genus %in% genus_reduced_within$Var1,]
+Xdata_species_within <- malaria[malaria$Host_species %in% species_reduced_within$Var1,]
+
+Xdata_order_between <- malaria[malaria$Host_order %in% order_reduced_between$Var1,]
+Xdata_family_between <- malaria[malaria$Host_family %in% family_reduced_between$Var1,]
+Xdata_genus_between <- malaria[malaria$Host_genus %in% genus_reduced_between$Var1,]
+Xdata_species_between <- malaria[malaria$Host_species %in% species_reduced_between$Var1,]
+
+# Change taxonomic variables to factors
+malaria <- malaria %>% mutate(Host_order = as.factor(malaria$Host_order),
+                              Host_family = as.factor(malaria$Host_family),
+                              Host_genus = as.factor(malaria$Host_genus),
+                              Host_species = as.factor(malaria$Host_species), 
+                              Host_subspp = as.factor(malaria$Host_subspp))
+
 
 ```
 
@@ -685,7 +724,6 @@ Zero-inflated distributions, try other distributions
 OUTCOME VARIABLE: Co-infection present (binary)
 MODEL IDEAS:
 - multivariate logistic regression
-  + elastic net
   + main effect variable: species/genus/family (categorical)
   + would need to remove groups with low counts, not enough confidence
 
@@ -700,7 +738,7 @@ Look into nested models... (but are there enough obs in genus, species?)
 CLUSTERING:
 * k-means clustering
 
-```{r}
+```{r taxonomy.tables}
 # Number of unique taxonomic groups by level
 length(unique(malaria$Host_order))
 length(unique(malaria$Host_family))
@@ -709,28 +747,10 @@ length(unique(malaria$Host_species))
 length(unique(malaria$Host_subspp))
 
 # Tables of taxonomic groups by frequency
+malaria %>% group_by(Host_order) %>% summarize(Count = n()) %>% arrange(desc(Count))
 malaria %>% group_by(Host_family) %>% summarize(Count = n()) %>% arrange(desc(Count))
 malaria %>% group_by(Host_genus) %>% summarize(Count = n()) %>% arrange(desc(Count))
 malaria %>% group_by(Host_species) %>% summarize(Count = n()) %>% arrange(desc(Count))
-
-# Convert number of groups by taxonomic level to data frames
-order_freqs <- as.data.frame(table(malaria$Host_order))
-family_freqs <- as.data.frame(table(malaria$Host_family))
-genus_freqs <- as.data.frame(table(malaria$Host_genus))
-species_freqs <- as.data.frame(table(malaria$Host_species))
-
-# Create reduced version of data frames with counts of at least [update me to be different for each of the taxa]
-min <- 50
-order_reduced <- order_freqs[order_freqs$Freq >= min,]
-family_reduced <- family_freqs[family_freqs$Freq >= min,]
-genus_reduced <- genus_freqs[genus_freqs$Freq >= min,]
-species_reduced <- species_freqs[species_freqs$Freq >= min,]
-
-# Prepare data for chi-squared test tables
-Xdata_order <- malaria[malaria$Host_order %in% order_reduced$Var1,]
-Xdata_family <- malaria[malaria$Host_family %in% family_reduced$Var1,]
-Xdata_genus <- malaria[malaria$Host_genus %in% genus_reduced$Var1,]
-Xdata_species <- malaria[malaria$Host_species %in% species_reduced$Var1,]
 
 # Look at tables for chi-squared tests - within-genus co-infection
 table(Xdata_order$Host_order, Xdata_order$any_coinf_within)
@@ -775,23 +795,43 @@ tax_freq_hists <- grid.arrange(order_hist, family_hist, genus_hist, species_hist
 ggsave("taxonomical frequencies.png", tax_freq_hists, height = 4, width = 3)
 ```
 
-```{r}
+```{r chisquared.tests}
 # Chi-squared tests - within-genus co-infection
-(Xwithin.order <-   chisq.test(table(Xdata_order$Host_order, Xdata_order$any_coinf_within)))
-(Xwithin.family <-  chisq.test(table(Xdata_family$Host_family, Xdata_family$any_coinf_within)))
-(Xwithin.genus <-   chisq.test(table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_within)))
-(Xwithin.species <- chisq.test(table(Xdata_species$Host_species, Xdata_species$any_coinf_within)))
+(Xwithin.order <-   chisq.test(table(Xdata_order_within$Host_order, 
+                                     Xdata_order_within$any_coinf_within)))
+Xwithin.order$stdres
+
+(Xwithin.family <-  chisq.test(table(Xdata_family_within$Host_family, 
+                                     Xdata_family_within$any_coinf_within)))
+Xwithin.family$stdres
+
+(Xwithin.genus <-   chisq.test(table(Xdata_genus_within$Host_genus, 
+                                     Xdata_genus_within$any_coinf_within)))
+Xwithin.genus$stdres
+
+(Xwithin.species <- chisq.test(table(Xdata_species_within$Host_species, 
+                                     Xdata_species_within$any_coinf_within)))
+Xwithin.species$stdres
 
 # Chi-squared tests - between-genus co-infection
-(Xbetween.order <-   chisq.test(table(Xdata_order$Host_order, Xdata_order$any_coinf_between)))
-(Xbetween.family <-  chisq.test(table(Xdata_family$Host_family, Xdata_family$any_coinf_between)))
-(Xbetween.genus <-   chisq.test(table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_between)))
-(Xbetween.species <- chisq.test(table(Xdata_species$Host_species, Xdata_species$any_coinf_between)))
+(Xbetween.order <-   chisq.test(table(Xdata_order_between$Host_order, 
+                                      Xdata_order_between$any_coinf_between)))
+Xbetween.order$stdres
 
+(Xbetween.family <-  chisq.test(table(Xdata_family_between$Host_family, 
+                                      Xdata_family_between$any_coinf_between)))
+Xbetween.family$stdres
+
+(Xbetween.genus <-   chisq.test(table(Xdata_genus_between$Host_genus, 
+                                      Xdata_genus_between$any_coinf_between)))
+Xbetween.genus$stdres
+
+(Xbetween.species <- chisq.test(table(Xdata_species_between$Host_species, 
+                                      Xdata_species_between$any_coinf_between)))
 ```
 
 #### Logistic regression: All orders, families, genera
-```{r}
+```{r log.regs.all}
 # Leucocytozoon
 Lglm1 <- glm(leuco_coinf ~ I(Host_order), data = malaria, family = binomial)
 summary(Lglm1)
@@ -834,22 +874,97 @@ summary(Aglm3)
 
 ```
 
+#### Logistic regression: Reduced orders, families, genera, species
+```{r log.regs.all}
+# Leucocytozoon
+Xdata_order_within$Host_order <- C(Xdata_order_within$Host_order, contr.treatment, base = )
+rLglm1 <- glm(leuco_coinf ~ I(Host_order), 
+             data = Xdata_order_within, family = binomial)
+summary(rLglm1)
+
+Lglm2 <- glm(leuco_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Lglm2)
+
+Lglm3 <- glm(leuco_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Lglm3)
+
+# Haemocrodius
+Hglm1 <- glm(haemo_coinf ~ Host_order, data = malaria, family = binomial)
+summary(Hglm1)
+
+Hglm2 <- glm(haemo_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Hglm2)
+
+Hglm3 <- glm(haemo_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Hglm3)
+
+# Plasmodium
+Pglm1 <- glm(plas_coinf ~ Host_order, data = malaria, family = binomial)
+summary(Pglm1)
+
+Pglm2 <- glm(plas_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Pglm2)
+
+Pglm3 <- glm(plas_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Pglm3)
+
+# Any infection
+Aglm1 <- glm(any_coinf_within ~ Host_order, data = malaria, family = binomial)
+summary(Aglm1)
+
+Aglm2 <- glm(any_coinf_within ~ Host_family, data = malaria, family = binomial)
+summary(Aglm2)
+
+Aglm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
+summary(Aglm3)
+
+```
+
 #### k-means Clustering
-```{r}
-any_coinf_order <- as.data.frame(prop.table(
-  table(malaria$Host_order, malaria$any_coinf_within), 1))
-any_coinf_order <- any_coinf_order[any_coinf_order$Var2=="1", c("Var1", "Freq")]
-colnames(any_coinf_order) <- c("Order", "p_coinf")
-(cluster1 <- kmeans(any_coinf_order$p_coinf, centers = 3))
-plot(any_coinf_order$p_coinf, col = cluster1$cluster)
+```{r clustering.elevation}
+## Order
+cl.table1 <- malaria[, c('Host_order', 'Elevation', 'coinf_within_order')]
+cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
+cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 3)
+plot(cl.table1$Elevation, cl.table1$coinf_within_order, col = cluster1$cluster)
 
-any_coinf_species <- as.data.frame(prop.table(
-  table(malaria$Host_species, malaria$any_coinf_within), 1))
-any_coinf_species <- any_coinf_species[any_coinf_species$Var2=="1", c("Var1", "Freq")]
-colnames(any_coinf_species) <- c("Species", "p_coinf")
-kmeans(any_coinf_species$p_coinf, centers = 3)
-plot(any_coinf_species$p_coinf, cl$cluster)
+cl.table2 <- malaria[, c('Host_order', 'Elevation', 'coinf_between_order')]
+cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
+cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 3)
+plot(cl.table2$Elevation, cl.table2$coinf_between_order, col = cluster2$cluster)
 
+## Family
+cl.table1 <- malaria[, c('Host_family', 'Elevation', 'coinf_within_family')]
+cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
+cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 4)
+plot(cl.table1$Elevation, cl.table1$coinf_within_family, col = cluster1$cluster)
+
+cl.table2 <- malaria[, c('Host_family', 'Elevation', 'coinf_between_family')]
+cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
+cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 4)
+plot(cl.table2$Elevation, cl.table2$coinf_between_family, col = cluster2$cluster)
+
+## Genus
+cl.table1 <- malaria[, c('Host_order', 'Elevation', 'coinf_within_genus')]
+cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
+cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 4)
+plot(cl.table1$Elevation, cl.table1$coinf_within_genus, col = cluster1$cluster)
+
+cl.table2 <- malaria[, c('Host_order', 'Elevation', 'coinf_between_genus')]
+cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
+cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 4)
+plot(cl.table2$Elevation, cl.table2$coinf_between_genus, col = cluster2$cluster)
+
+## Species
+cl.table1 <- malaria[, c('Host_order', 'Elevation', 'coinf_within_species')]
+cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
+cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 5)
+plot(cl.table1$Elevation, cl.table1$coinf_within_species, col = cluster1$cluster)
+
+cl.table2 <- malaria[, c('Host_order', 'Elevation', 'coinf_between_species')]
+cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
+cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 5)
+plot(cl.table2$Elevation, cl.table2$coinf_between_species, col = cluster2$cluster)
 ```
 
 
