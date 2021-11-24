@@ -495,7 +495,7 @@ upperhatLB <- mean(upperciB)
 
 cat("Leuco:", phatLB, lowerhatLB, upperhatLB)
 
-## Haemocrodius
+## Haemoproteus
 p_H
 
 nsim <- 1500              # Set number of runs for bootstrap samples
@@ -569,7 +569,7 @@ upperhat2LB <- mean(upperciB)
 
 cat("Leuco:", phat2LB, lowerhat2LB, upperhat2LB)
 
-## Haemocrodius
+## Haemoproteus
 p2_H
 
 nsim <- 1500              # Set number of runs for bootstrap samples
@@ -884,7 +884,7 @@ summary(Lglm2)
 Lglm3 <- glm(leuco_coinf ~ Host_genus, data = malaria, family = binomial)
 summary(Lglm3)
 
-# Haemocrodius
+# Haemoproteus
 Hglm1 <- glm(haemo_coinf ~ Host_order, data = malaria, family = binomial)
 summary(Hglm1)
 
