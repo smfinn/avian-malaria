@@ -196,6 +196,8 @@ elevation <- ggplot(malaria, aes(Elevation)) +
 elevation
 ```
 
+NOTE: CHANGE POSITIVITY -> PREVALENCE (1 = positive, 0 = not positive (NOT negative))
+
 #### Infections by country
 ```{r}
 leuco.country <- as.data.frame(table(malaria$positive_l, malaria$Country))
@@ -218,6 +220,8 @@ leuco_eda <- grid.arrange(leuco_eda1, leuco_eda2, nrow = 1,
              top = "Leucocytozoon Positivity by Country")
 ggsave("leucocytozoon by country.png", leuco_eda, width = 7, height = 4)
 ```
+
+NOTE: HAEMOPROTEUS
 
 ```{r}
 haemo.country <- as.data.frame(table(malaria$positive_h, malaria$Country))
@@ -348,7 +352,12 @@ summary(glm(infected_any ~ Sex, data = malaria[malaria$Sex != "X",], family = bi
 ```
 
 
-## 1. How often do co-infections occur within the same genera of avian malarial pathogens? 
+## 1. How often do co-infections occur within the same genus of avian malarial pathogen? 
+
+NOTE: Create survey weights -- weight based on each taxonomic level
+      can also weight by country, or sampling areas
+
+Compare with using the negative binomial distribution for confidence intervals
 
 #### *Among birds who are infected*
 
@@ -356,43 +365,34 @@ summary(glm(infected_any ~ Sex, data = malaria[malaria$Sex != "X",], family = bi
 total_n <- 3418
 
 # Leucocytozoon
-sum(malaria$screened_l == "Yes")   # How many screened
-sum(malaria$positive_l, na.rm = T) # How many positive 
-sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T)  # Co-infections
-(p_L <- 198 / 749)
-n_L <- 749
+n_L <- sum(malaria$positive_l, na.rm = T) # How many positive 
+p_L <- sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T) / n_L
 ci_L.lower <- p_L - qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
 ci_L.upper <- p_L + qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
-cat("95% confidence interval: [", round(c(ci_L.lower, ci_L.upper)*100, 2), "]")
+cat("Leucocytozoon 95% CI: [", round(c(ci_L.lower, ci_L.upper)*100, 2), "]")
 
-# Haemocrodius
-sum(malaria$screened_h == "Yes")   # How many screened
-sum(malaria$positive_h, na.rm = T) # How many positive 
-sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T)  # Co-infections
-(p_H <- 51 / 348)
-n_H <- 348
+# Haemoproteus
+n_H <- sum(malaria$positive_h, na.rm = T) # How many positive 
+p_H <- sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T) / n_H
 ci_H.lower <- p_H - qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
 ci_H.upper <- p_H + qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
-cat("95% confidence interval: [", round(c(ci_H.lower, ci_H.upper)*100, 2), "]")
+cat("Haemoproteus 95% CI: [", round(c(ci_H.lower, ci_H.upper)*100, 2), "]")
 
 # Plasmodium
-sum(malaria$screened_p == "Yes")   # How many screened
-sum(malaria$positive_p, na.rm = T) # How many positive 
-sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T)  # Co-infections
-(p_P <- 166 / 761)
-n_P <- 761
+n_P <- sum(malaria$positive_p, na.rm = T) # How many positive 
+p_P <- sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T) / n_P
 ci_P.lower <- p_P - qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
 ci_P.upper <- p_P + qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
-cat("95% confidence interval: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
+cat("Plasmodium 95% CI: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
 ```
 
 Leucocytozoon: [23.28%, 29.59%]
-Haemocrodius: [10.94%, 18.37%]
+Haemoproteus: [10.94%, 18.37%]
 Plasmodium: [18.88%, 24.75%]
 
 
 ```{r}
-genera <- c("Leucocytozoon", "Haemocrodius", "Plasmodium")
+genera <- c("Leucocytozoon", "Haemoproteus", "Plasmodium")
 y <- c(p_L*100, p_H*100, p_P*100)
 ymin <- c(ci_L.lower*100, ci_H.lower*100, ci_P.lower*100)
 ymax <- c(ci_L.upper*100, ci_H.upper*100, ci_P.upper*100)
@@ -422,30 +422,27 @@ ggsave("frequency by genus1.png", wald_boxes_chart, height = 4.5, width = 5)
 total_n <- 3418
 
 # Leucocytozoon
-num_screened_l <- sum(malaria$screened_l == "Yes")   # How many screened
-sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T)  # Co-infections
-(p2_L <- 198 / num_screened_l)
+num_screened_l <- sum(malaria$screened_l == "Yes") 
+p2_L <- sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T) / num_screened_l
 ci2_L.lower <- p2_L - qnorm(0.975) * sqrt((p2_L * (1 - p2_L)) / num_screened_l)
 ci2_L.upper <- p2_L + qnorm(0.975) * sqrt((p2_L * (1 - p2_L)) / num_screened_l)
-cat("95% confidence interval: [", round(c(ci2_L.lower, ci2_L.upper)*100, 2), "]")
+cat("Leucocytozoon 95% CI: [", round(c(ci2_L.lower, ci2_L.upper)*100, 2), "]")
 
-# Haemocrodius
-sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T)  # Co-infections
-(p2_H <- 51 / total_n)
+# Haemoproteus
+p2_H <- sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T) / total_n
 ci2_H.lower <- p2_H - qnorm(0.975) * sqrt((p2_H * (1 - p2_H)) / total_n)
 ci2_H.upper <- p2_H + qnorm(0.975) * sqrt((p2_H * (1 - p2_H)) / total_n)
-cat("95% confidence interval: [", round(c(ci2_H.lower, ci2_H.upper)*100, 2), "]")
+cat("Haemoproteus 95% CI: [", round(c(ci2_H.lower, ci2_H.upper)*100, 2), "]")
 
 # Plasmodium
-sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T)  # Co-infections
-(p2_P <- 166 / total_n)
+p2_P <- sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T) / total_n
 ci2_P.lower <- p2_P - qnorm(0.975) * sqrt((p2_P * (1 - p2_P)) / total_n)
 ci2_P.upper <- p2_P + qnorm(0.975) * sqrt((p2_P * (1 - p2_P)) / total_n)
-cat("95% confidence interval: [", round(c(ci2_P.lower, ci2_P.upper)*100, 2), "]")
+cat("Plasmodium 95% CI: [", round(c(ci2_P.lower, ci2_P.upper)*100, 2), "]")
 ```
 
 ```{r}
-genera <- c("Leucocytozoon", "Haemocrodius", "Plasmodium")
+genera <- c("Leucocytozoon", "Haemoproteus", "Plasmodium")
 y2 <- c(p2_L*100, p2_H*100, p2_P*100)
 ymin2 <- c(ci2_L.lower*100, ci2_H.lower*100, ci2_P.lower*100)
 ymax2 <- c(ci2_L.upper*100, ci2_H.upper*100, ci2_P.upper*100)
@@ -469,7 +466,6 @@ wald_boxes_chart2
 ggsave("frequency by genus2.png", wald_boxes_chart2, height = 4.5, width = 5)
 ```
 
-Compare with using the negative binomial distribution for confidence intervals
 
 #### Bootstrapping: Among infected birds
 
@@ -744,7 +740,7 @@ length(unique(malaria$Host_order))
 length(unique(malaria$Host_family))
 length(unique(malaria$Host_genus))
 length(unique(malaria$Host_species))
-length(unique(malaria$Host_subspp))
+length(unique(malaria$Host_subspp)) # ignore this
 
 # Tables of taxonomic groups by frequency
 malaria %>% group_by(Host_order) %>% summarize(Count = n()) %>% arrange(desc(Count))
@@ -842,7 +838,7 @@ summary(Lglm2)
 Lglm3 <- glm(leuco_coinf ~ Host_genus, data = malaria, family = binomial)
 summary(Lglm3)
 
-# Haemocrodius
+# Haemoproteus
 Hglm1 <- glm(haemo_coinf ~ Host_order, data = malaria, family = binomial)
 summary(Hglm1)
 
@@ -862,7 +858,7 @@ summary(Pglm2)
 Pglm3 <- glm(plas_coinf ~ Host_genus, data = malaria, family = binomial)
 summary(Pglm3)
 
-# Any infection
+# Any co-infection
 Aglm1 <- glm(any_coinf_within ~ Host_order, data = malaria, family = binomial)
 summary(Aglm1)
 
@@ -919,6 +915,9 @@ Aglm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
 summary(Aglm3)
 
 ```
+
+NOTE: Try removing Kenya for regressions with elevation as covariate (doesn't behave the same as high elevation locations); could look specifically at Mozambique for differences by elevation (sampling locations)
+
 
 #### k-means Clustering
 ```{r clustering.elevation}
