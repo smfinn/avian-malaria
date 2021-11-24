@@ -14,6 +14,7 @@ library(grid)
 library(gridExtra)
 library(cluster)
 library(gmodels)
+library(ggplot2)
 theme_set(
   theme_minimal()
 )
@@ -792,14 +793,21 @@ ggsave("taxonomical frequencies.png", tax_freq_hists, height = 4, width = 3)
 
 #### Logistic regression: All orders, families, genera
 ```{r}
+install.packages("MASS")
+library("MASS")
 # Leucocytozoon
-Lglm1 <- glm(leuco_coinf ~ I(Host_order), data = malaria, family = binomial)
+Lglm1 <- glm.nb(leuco_coinf ~ I(Host_order), data = malaria)
 summary(Lglm1)
 
 Lglm2 <- glm(leuco_coinf ~ Host_family, data = malaria, family = binomial)
 summary(Lglm2)
 
-Lglm3 <- glm(leuco_coinf ~ Host_genus, data = malaria, family = binomial)
+
+Lglm2 <- glm.nb(leuco_coinf ~ Host_family, data = malaria)
+summary(Lglm2)
+
+
+Lglm3 <- glm.nb(leuco_coinf ~ Host_genus, data = malaria)
 summary(Lglm3)
 
 # Haemocrodius
@@ -830,6 +838,9 @@ Aglm2 <- glm(any_coinf_within ~ Host_family, data = malaria, family = binomial)
 summary(Aglm2)
 
 Aglm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
+summary(Aglm3)
+
+Aglm3 <- glm.nb(any_coinf_within ~ Host_genus, data = malaria)
 summary(Aglm3)
 
 ```
