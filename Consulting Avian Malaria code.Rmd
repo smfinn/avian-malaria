@@ -1,7 +1,7 @@
 ---
 title: "Consulting Avian Malaria"
 author: "Sean Finn & Evelyn Lupancu"
-date: "Updated 11/23/2021"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output: pdf_document
 ---
 
