@@ -15,6 +15,7 @@ library(gridExtra)
 library(cluster)
 library(gmodels)
 library(ggplot2)
+library(MASS)
 theme_set(
   theme_minimal()
 )
@@ -175,8 +176,6 @@ malaria <- malaria %>% mutate(Host_order = as.factor(malaria$Host_order),
                               Host_genus = as.factor(malaria$Host_genus),
                               Host_species = as.factor(malaria$Host_species), 
                               Host_subspp = as.factor(malaria$Host_subspp))
-
-
 ```
 
 ## Exploratory Data Analysis
@@ -750,16 +749,16 @@ malaria %>% group_by(Host_genus) %>% summarize(Count = n()) %>% arrange(desc(Cou
 malaria %>% group_by(Host_species) %>% summarize(Count = n()) %>% arrange(desc(Count))
 
 # Look at tables for chi-squared tests - within-genus co-infection
-table(Xdata_order$Host_order, Xdata_order$any_coinf_within)
-table(Xdata_family$Host_family, Xdata_family$any_coinf_within)
-table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_within)
-table(Xdata_species$Host_species, Xdata_species$any_coinf_within)
+table(Xdata_order_within$Host_order, Xdata_order_within$any_coinf_within)
+table(Xdata_family_within$Host_family, Xdata_family_within$any_coinf_within)
+table(Xdata_genus_within$Host_genus, Xdata_genus_within$any_coinf_within)
+table(Xdata_species_within$Host_species, Xdata_species_within$any_coinf_within)
 
 # Look at tables for chi-squared tests - between-genus co-infection
-table(Xdata_order$Host_order, Xdata_order$any_coinf_between)
-table(Xdata_family$Host_family, Xdata_family$any_coinf_between)
-table(Xdata_genus$Host_genus, Xdata_genus$any_coinf_between)
-table(Xdata_species$Host_species, Xdata_species$any_coinf_between)
+table(Xdata_order_between$Host_order, Xdata_order_between$any_coinf_between)
+table(Xdata_family_between$Host_family, Xdata_family_between$any_coinf_between)
+table(Xdata_genus_between$Host_genus, Xdata_genus_between$any_coinf_between)
+table(Xdata_species_between$Host_species, Xdata_species_between$any_coinf_between)
 
 ```
 
@@ -828,13 +827,8 @@ Xbetween.genus$stdres
 ```
 
 #### Logistic regression: All orders, families, genera
-<<<<<<< HEAD
-```{r}
-install.packages("MASS")
-library("MASS")
-=======
+
 ```{r log.regs.all}
->>>>>>> d24bf79f6cf7a6f21dd2e3ac99244e55f512c8bb
 # Leucocytozoon
 Lglm1 <- glm.nb(leuco_coinf ~ I(Host_order), data = malaria)
 summary(Lglm1)
