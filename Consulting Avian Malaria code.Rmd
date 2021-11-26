@@ -832,100 +832,135 @@ Xbetween.genus$stdres
 ```
 
 #### Logistic regression: All orders, families, genera
+```{r basic.logreg}
+# Any within-genus co-infection
+w.glm1 <- glm(any_coinf_within ~ Host_order, data = malaria, family = binomial)
+summary(w.glm1)
 
-```{r log.regs.all}
-# Leucocytozoon
-Lglm1 <- glm.nb(leuco_coinf ~ I(Host_order), data = malaria)
-summary(Lglm1)
+w.glm2 <- glm(any_coinf_within ~ Host_family, data = malaria, family = binomial)
+summary(w.glm2)
 
-Lglm2 <- glm(leuco_coinf ~ Host_family, data = malaria, family = binomial)
-summary(Lglm2)
+w.glm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
+summary(w.glm3)
 
-Lglm2 <- glm.nb(leuco_coinf ~ Host_family, data = malaria)
-summary(Lglm2)
+w.glm4 <- glm(any_coinf_within ~ Host_species, data = malaria, family = binomial)
+summary(w.glm4)
 
-Lglm3 <- glm.nb(leuco_coinf ~ Host_genus, data = malaria)
-summary(Lglm3)
+# Any between-genera co-infection
+b.glm1 <- glm(any_coinf_between ~ Host_order, data = malaria, family = binomial)
+summary(b.glm1)
 
-# Haemoproteus
-Hglm1 <- glm(haemo_coinf ~ Host_order, data = malaria, family = binomial)
-summary(Hglm1)
+b.glm2 <- glm(any_coinf_between ~ Host_family, data = malaria, family = binomial)
+summary(b.glm2)
 
-Hglm2 <- glm(haemo_coinf ~ Host_family, data = malaria, family = binomial)
-summary(Hglm2)
+b.glm3 <- glm(any_coinf_between ~ Host_genus, data = malaria, family = binomial)
+summary(b.glm3)
 
-Hglm3 <- glm(haemo_coinf ~ Host_genus, data = malaria, family = binomial)
-summary(Hglm3)
-
-# Plasmodium
-Pglm1 <- glm(plas_coinf ~ Host_order, data = malaria, family = binomial)
-summary(Pglm1)
-
-Pglm2 <- glm(plas_coinf ~ Host_family, data = malaria, family = binomial)
-summary(Pglm2)
-
-Pglm3 <- glm(plas_coinf ~ Host_genus, data = malaria, family = binomial)
-summary(Pglm3)
-
-# Any co-infection
-Aglm1 <- glm(any_coinf_within ~ Host_order, data = malaria, family = binomial)
-summary(Aglm1)
-
-Aglm2 <- glm(any_coinf_within ~ Host_family, data = malaria, family = binomial)
-summary(Aglm2)
-
-Aglm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
-summary(Aglm3)
-
+b.glm4 <- glm(any_coinf_between ~ Host_species, data = malaria, family = binomial)
+summary(b.glm4)
 ```
 
 #### Logistic regression: Reduced orders, families, genera, species
-```{r log.regs.all}
-# Leucocytozoon
-Xdata_order_within$Host_order <- C(Xdata_order_within$Host_order, contr.treatment, base = )
-rLglm1 <- glm(leuco_coinf ~ I(Host_order), 
-             data = Xdata_order_within, family = binomial)
-summary(rLglm1)
+```{r reduced.logreg}
+# Any within-genus co-infection
+rw.glm1 <- glm(any_coinf_within ~ Host_order, data = Xdata_order_within, family = binomial)
+summary(rw.glm1)
 
-Lglm2 <- glm(leuco_coinf ~ Host_family, data = malaria, family = binomial)
-summary(Lglm2)
+rw.glm2 <- glm(any_coinf_within ~ Host_family, data = Xdata_family_within, family = binomial)
+summary(rw.glm2)
 
-Lglm3 <- glm(leuco_coinf ~ Host_genus, data = malaria, family = binomial)
-summary(Lglm3)
+rw.glm3 <- glm(any_coinf_within ~ Host_genus, data = Xdata_genus_within, family = binomial)
+summary(rw.glm3)
 
-# Haemoproteus
-Hglm1 <- glm(haemo_coinf ~ Host_order, data = malaria, family = binomial)
-summary(Hglm1)
+rw.glm4 <- glm(any_coinf_within ~ Host_species, data = Xdata_species_within, family = binomial)
+summary(rw.glm4)
 
-Hglm2 <- glm(haemo_coinf ~ Host_family, data = malaria, family = binomial)
-summary(Hglm2)
+# Any between-genera co-infection
+rb.glm1 <- glm(any_coinf_between ~ Host_order, data = Xdata_order_between, family = binomial)
+summary(rb.glm1)
 
-Hglm3 <- glm(haemo_coinf ~ Host_genus, data = malaria, family = binomial)
-summary(Hglm3)
+rb.glm2 <- glm(any_coinf_between ~ Host_family, data = Xdata_family_between, family = binomial)
+summary(rb.glm2)
 
-# Plasmodium
-Pglm1 <- glm(plas_coinf ~ Host_order, data = malaria, family = binomial)
-summary(Pglm1)
+rb.glm3 <- glm(any_coinf_between ~ Host_genus, data = Xdata_genus_between, family = binomial)
+summary(rb.glm3)
 
-Pglm2 <- glm(plas_coinf ~ Host_family, data = malaria, family = binomial)
-summary(Pglm2)
+rb.glm4 <- glm(any_coinf_between ~ Host_species, data = Xdata_species_between, family = binomial)
+summary(rb.glm4)
+```
 
-Pglm3 <- glm(plas_coinf ~ Host_genus, data = malaria, family = binomial)
-summary(Pglm3)
+#### Logistic regression: Reduced taxonomic groups by counts; reference group is mode
+```{r altreference.reduced.logreg}
+# Any within-genus co-infection
+Xdata_order_within$Host_order <- relevel(as.factor(Xdata_order_within$Host_order), "Passeriformes")
+rrw.glm1 <- glm(any_coinf_within ~ Host_order, data = Xdata_order_within, family = binomial)
+summary(rrw.glm1)
 
-# Any infection
-Aglm1 <- glm(any_coinf_within ~ Host_order, data = malaria, family = binomial)
-summary(Aglm1)
+Xdata_family_within$Host_family <- relevel(as.factor(Xdata_family_within$Host_family), "Pycnonotidae")
+rrw.glm2 <- glm(any_coinf_within ~ Host_family, data = Xdata_family_within, family = binomial)
+summary(rrw.glm2)
 
-Aglm2 <- glm(any_coinf_within ~ Host_family, data = malaria, family = binomial)
-summary(Aglm2)
+Xdata_genus_within$Host_genus <- relevel(as.factor(Xdata_genus_within$Host_genus), "Calandrella")
+rrw.glm3 <- glm(any_coinf_within ~ Host_genus, data = Xdata_genus_within, family = binomial)
+summary(rrw.glm3)
 
-Aglm3 <- glm(any_coinf_within ~ Host_genus, data = malaria, family = binomial)
-summary(Aglm3)
+Xdata_species_within$Host_species <- relevel(as.factor(Xdata_species_within$Host_species), "cinerea")
+rrw.glm4 <- glm(any_coinf_within ~ Host_species, data = Xdata_species_within, family = binomial)
+summary(rrw.glm4)
 
-Aglm3 <- glm.nb(any_coinf_within ~ Host_genus, data = malaria)
-summary(Aglm3)
+# Any between-genera co-infection
+Xdata_order_between$Host_order <- relevel(as.factor(Xdata_order_between$Host_order), "Passeriformes")
+rrb.glm1 <- glm(any_coinf_between ~ Host_order, data = Xdata_order_between, family = binomial)
+summary(rrb.glm1)
 
+Xdata_family_between$Host_family <- relevel(as.factor(Xdata_family_between$Host_family), "Pycnonotidae")
+rrb.glm2 <- glm(any_coinf_between ~ Host_family, data = Xdata_family_between, family = binomial)
+summary(rrb.glm2)
+
+Xdata_genus_between$Host_genus <- relevel(as.factor(Xdata_genus_between$Host_genus), "Calandrella")
+rrb.glm3 <- glm(any_coinf_between ~ Host_genus, data = Xdata_genus_between, family = binomial)
+summary(rrb.glm3)
+
+Xdata_species_between$Host_species <- relevel(as.factor(Xdata_species_between$Host_species), "cinerea")
+rrb.glm4 <- glm(any_coinf_between ~ Host_species, data = Xdata_species_between, family = binomial)
+summary(rrb.glm4)
+```
+
+#### Logistic regression: Reduced taxonomic groups by counts; reference group is mode; add covariates (Year, Country, Elevation)
+```{r cov.altreference.reduced.logreg}
+# Any within-genus co-infection
+Xdata_order_within$Country <- relevel(as.factor(Xdata_order_within$Country), "Kenya")
+crrw.glm1 <- glm(any_coinf_within ~ Host_order + Year + Elevation + Country, data = Xdata_order_within, family = binomial)
+summary(crrw.glm1)
+
+Xdata_family_within$Country <- relevel(as.factor(Xdata_family_within$Country), "Kenya")
+crrw.glm2 <- glm(any_coinf_within ~ Host_family + Year + Elevation + Country, data = Xdata_family_within, family = binomial)
+summary(crrw.glm2)
+
+Xdata_genus_within$Country <- relevel(as.factor(Xdata_genus_within$Country), "Kenya")
+crrw.glm3 <- glm(any_coinf_within ~ Host_genus + Year + Elevation + Country, data = Xdata_genus_within, family = binomial)
+summary(crrw.glm3)
+
+Xdata_species_within$Country <- relevel(as.factor(Xdata_species_within$Country), "Kenya")
+crrw.glm4 <- glm(any_coinf_within ~ Host_species + Year + Elevation + Country, data = Xdata_species_within, family = binomial)
+summary(crrw.glm4)
+
+# Any between-genera co-infection
+Xdata_order_between$Country <- relevel(as.factor(Xdata_order_between$Country), "Kenya")
+crrb.glm1 <- glm(any_coinf_between ~ Host_order + Year + Elevation + Country, data = Xdata_order_between, family = binomial)
+summary(crrb.glm1)
+
+Xdata_family_between$Country <- relevel(as.factor(Xdata_family_between$Country), "Kenya")
+crrb.glm2 <- glm(any_coinf_between ~ Host_family + Year + Elevation + Country, data = Xdata_family_between, family = binomial)
+summary(crrb.glm2)
+
+Xdata_genus_between$Country <- relevel(as.factor(Xdata_genus_between$Country), "Kenya")
+crrb.glm3 <- glm(any_coinf_between ~ Host_genus + Year + Elevation + Country, data = Xdata_genus_between, family = binomial)
+summary(crrb.glm3)
+
+Xdata_species_between$Country <- relevel(as.factor(Xdata_species_between$Country), "Kenya")
+crrb.glm4 <- glm(any_coinf_between ~ Host_species + Year + Elevation + Country, data = Xdata_species_between, family = binomial)
+summary(crrb.glm4)
 ```
 
 NOTE: Try removing Kenya for regressions with elevation as covariate (doesn't behave the same as high elevation locations); could look specifically at Mozambique for differences by elevation (sampling locations)
@@ -982,6 +1017,48 @@ plot(cl.table2$Elevation, cl.table2$coinf_between_species, col = cluster2$cluste
 ## 4. Does the likelihood of co-infection vary by malaria lineages?
 
 ```{r}
+
+```
+
+
+
+## OLD CODE
+
+```{r}
+## Logistic regressions ########################################################
+# Leucocytozoon
+Lglm1 <- glm.nb(leuco_coinf ~ I(Host_order), data = malaria)
+summary(Lglm1)
+
+Lglm2 <- glm(leuco_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Lglm2)
+
+Lglm2 <- glm.nb(leuco_coinf ~ Host_family, data = malaria)
+summary(Lglm2)
+
+Lglm3 <- glm.nb(leuco_coinf ~ Host_genus, data = malaria)
+summary(Lglm3)
+
+# Haemoproteus
+Hglm1 <- glm(haemo_coinf ~ Host_order, data = malaria, family = binomial)
+summary(Hglm1)
+
+Hglm2 <- glm(haemo_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Hglm2)
+
+Hglm3 <- glm(haemo_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Hglm3)
+
+# Plasmodium
+Pglm1 <- glm(plas_coinf ~ Host_order, data = malaria, family = binomial)
+summary(Pglm1)
+
+Pglm2 <- glm(plas_coinf ~ Host_family, data = malaria, family = binomial)
+summary(Pglm2)
+
+Pglm3 <- glm(plas_coinf ~ Host_genus, data = malaria, family = binomial)
+summary(Pglm3)
+
 
 ```
 
