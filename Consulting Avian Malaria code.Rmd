@@ -138,10 +138,10 @@ coinf_species <- data.frame(Host_species = co$Var1[co$Var2==0],
                             no.b = as.numeric(cb$Freq[cb$Var2==0]),
                             yes.Lw = as.numeric(cLw$Freq[cLw$Var2==1]),
                             no.Lw = as.numeric(cLw$Freq[cLw$Var2==0]),
-                            yes.Pw = as.numeric(cPw$Var2[cPw$Var2==1]),
-                            no.Pw = as.numeric(cPw$Var2[cPw$Var2==0]),
-                            yes.Hw = as.numeric(cHw$Var2[cHw$Var2==1]),
-                            no.Hw = as.numeric(cHw$Var2[cHw$Var2==0]))
+                            yes.Pw = as.numeric(cPw$Freq[cPw$Var2==1]),
+                            no.Pw = as.numeric(cPw$Freq[cPw$Var2==0]),
+                            yes.Hw = as.numeric(cHw$Freq[cHw$Var2==1]),
+                            no.Hw = as.numeric(cHw$Freq[cHw$Var2==0]))
 coinf_species$coinf_within_species <- coinf_species$yes.w / (coinf_species$yes.w + coinf_species$no.w)
 coinf_species$coinf_between_species <- coinf_species$yes.b / (coinf_species$yes.b + coinf_species$no.b)
 coinf_species$coinf_Lwithin_species <- coinf_species$yes.Lw / (coinf_species$yes.Lw + coinf_species$no.Lw)
