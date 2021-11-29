@@ -128,18 +128,26 @@ coinf_genus <- coinf_genus[,c("Host_genus", "coinf_within_genus", "coinf_between
 co <- as.data.frame(table(malaria$Host_species, malaria$any_coinf_within))
 cb <- as.data.frame(table(malaria$Host_species, malaria$any_coinf_between))
 cLw <- as.data.frame(table(malaria$Host_species, malaria$leuco_coinf))
+cPw <- as.data.frame(table(malaria$Host_species, malaria$plas_coinf))
+cHw <- as.data.frame(table(malaria$Host_species, malaria$haemo_coinf))
 coinf_species <- data.frame(Host_species = co$Var1[co$Var2==0],
                             yes.w = as.numeric(co$Freq[co$Var2==1]),
                             no.w = as.numeric(co$Freq[co$Var2==0]),
-                            yes.b = as.numeric(cb$Freq[co$Var2==1]),
-                            no.b = as.numeric(cb$Freq[co$Var2==0]),
+                            yes.b = as.numeric(cb$Freq[cb$Var2==1]),
+                            no.b = as.numeric(cb$Freq[cb$Var2==0]),
                             yes.Lw = as.numeric(cLw$Freq[cLw$Var2==1]),
-                            no.Lw = as.numeric(cLw$Freq[cLw$Var2==0]))
+                            no.Lw = as.numeric(cLw$Freq[cLw$Var2==0]),
+                            yes.Pw = as.numeric(cPw$Var2[cPw$Var2==1]),
+                            no.Pw = as.numeric(cPw$Var2[cPw$Var2==0]),
+                            yes.Hw = as.numeric(cHw$Var2[cHw$Var2==1]),
+                            no.Hw = as.numeric(cHw$Var2[cHw$Var2==0]))
 coinf_species$coinf_within_species <- coinf_species$yes.w / (coinf_species$yes.w + coinf_species$no.w)
 coinf_species$coinf_between_species <- coinf_species$yes.b / (coinf_species$yes.b + coinf_species$no.b)
 coinf_species$coinf_Lwithin_species <- coinf_species$yes.Lw / (coinf_species$yes.Lw + coinf_species$no.Lw)
+coinf_species$coinf_Pwithin_species <- coinf_species$yes.Pw / (coinf_species$yes.Pw + coinf_species$no.Pw)
+coinf_species$coinf_Hwithin_species <- coinf_species$yes.Hw / (coinf_species$yes.Hw + coinf_species$no.Hw)
 coinf_species <- coinf_species[,c("Host_species", "coinf_within_species", 
-                                  "coinf_between_species", "coinf_Lwithin_species")]
+                                  "coinf_between_species", "coinf_Lwithin_species", "coinf_Pwithin_species", "coinf_Hwithin_species")]
 
 # Add co-infection rates to main data frame
 malaria <- merge(malaria, coinf_order, by = "Host_order")
