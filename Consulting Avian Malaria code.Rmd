@@ -189,7 +189,7 @@ coinfL_species_infected <- coinfL_species_infected[, c("Host_species", "coinf_Lw
 coinfH_species_infected <- coinfH_species_infected[, c("Host_species", "coinf_Hwithin_infected")]
 coinfP_species_infected <- coinfP_species_infected[, c("Host_species", "coinf_Pwithin_infected")]
 
-# Add co-infection rates among infected birds to main data frame
+# Add co-infection rates among infected birds to main data frame  
 malaria <- merge(malaria, coinfL_species_infected, by = "Host_species", all.x = T)
 malaria <- merge(malaria, coinfH_species_infected, by = "Host_species", all.x = T)
 malaria <- merge(malaria, coinfP_species_infected, by = "Host_species", all.x = T)
