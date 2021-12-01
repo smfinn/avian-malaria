@@ -760,10 +760,17 @@ coinfected_all <- sum((malaria$positive_l == 1 & malaria$positive_h == 1) |
     (malaria$positive_l == 1 & malaria$positive_p == 1) |
     (malaria$positive_h == 1 & malaria$positive_p == 1), na.rm = T)
 p3 <- coinfected_all / infected_all
-wp3 <- mean(coinf_species$coinf_between_species, na.rm = T) / infected_all
+wp3 <- mean(coinf_species$coinf_between_species, na.rm = T)
+cat("Unweighted p-hat:", round(p3, 4), "\n")
+cat("Weighted p-hat:", round(wp3, 4), "\n")
+
 ci3.lower <- p3 - qnorm(0.975) * sqrt((p3 * (1 - p3)) / infected_all)
 ci3.upper <- p3 + qnorm(0.975) * sqrt((p3 * (1 - p3)) / infected_all)
-cat("95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "]")
+cat("Unweighted 95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "] \n")
+wci3.lower <- wp3 - qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / infected_all)
+wci3.upper <- wp3 + qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / infected_all)
+cat("Weighted 95% confidence interval: [", round(c(wci3.lower, wci3.upper)*100, 2), "] \n")
+
 ```
 
 #### *Among all birds screened*
@@ -771,9 +778,16 @@ cat("95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "]")
 ```{r}
 screened_all <- sum(malaria$screened_l=="Yes") # Leuco is only genus that didn't get tested for all birds
 p4 <- coinfected_all / screened_all
+cat("Unweighted p-hat:", round(p4, 4), "\n")
+cat("Weighted p-hat:", round(wp3, 4), "\n")
+
 ci4.lower <- p4 - qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
 ci4.upper <- p4 + qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
-cat("95% confidence interval: [", round(c(ci4.lower, ci4.upper)*100, 2), "]")
+cat("95% confidence interval: [", round(c(ci4.lower, ci4.upper)*100, 2), "] \n")
+wci4.lower <- wp3 - qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / screened_all)
+wci4.upper <- wp3 + qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / screened_all)
+cat("Weighted 95% confidence interval: [", round(c(wci3.lower, wci3.upper)*100, 2), "] \n")
+
 ```
 
 #### Bootstrapping: Among infected birds
