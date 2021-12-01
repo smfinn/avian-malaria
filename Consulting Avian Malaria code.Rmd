@@ -17,6 +17,7 @@ library(gmodels)
 library(ggplot2)
 library(MASS)
 library(lme4)
+library(nlme)
 library(mice)
 theme_set(
   theme_minimal()
@@ -438,7 +439,7 @@ total_n <- 3418
 # Leucocytozoon
 n_L <- sum(malaria$positive_l, na.rm = T) # How many positive 
 p_L <- sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T) / n_L
-w.p.L <- mean(coinf_species_infected$coinf_Lwithin_infected, na.rm = T)
+w.p.L <- mean(coinfL_species_infected$coinf_Lwithin_infected, na.rm = T)
 cat("Unweighted p-hat for Leuco:", round(p_L, 4), "\n")
 cat("Weighted p-hat for Leuco:", round(w.p.L, 4), "\n")
 
@@ -452,7 +453,7 @@ cat("Leucocytozoon weighted 95% CI: [", round(c(wci_L.lower, wci_L.upper)*100, 2
 # Haemoproteus
 n_H <- sum(malaria$positive_h, na.rm = T) # How many positive 
 p_H <- sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T) / n_H
-w.p.H <- mean(coinf_species_infected$coinf_Hwithin_infected, na.rm = T)
+w.p.H <- mean(coinfH_species_infected$coinf_Hwithin_infected, na.rm = T)
 cat("Unweighted p-hat for Haemo:", round(p_H, 4), "\n")
 cat("Weighted p-hat for Haemo:", round(w.p.H, 4), "\n")
 
@@ -466,7 +467,7 @@ cat("Haemoproteus weighted 95% CI: [", round(c(wci_H.lower, wci_H.upper)*100, 2)
 # Plasmodium
 n_P <- sum(malaria$positive_p, na.rm = T) # How many positive 
 p_P <- sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T) / n_P
-w.p.P <- mean(coinf_species_infected$coinf_Pwithin_infected, na.rm = T)
+w.p.P <- mean(coinfP_species_infected$coinf_Pwithin_infected, na.rm = T)
 cat("Unweighted p-hat for Plasmodium:", round(p_P, 4), "\n")
 cat("Weighted p-hat for Plasmodium:", round(w.p.P, 4), "\n")
 
@@ -596,7 +597,7 @@ wald_boxes_chart2 <- ggplot(wald_boxes2, aes(genera, y)) +
   scale_y_continuous(limits = c(0, 8)) +
   scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
   theme(legend.position = "none") +
-  labs(title = "Prevalnce of Malaria Infection by Genus (Unweighted)", 
+  labs(title = "Prevalence of Malaria Infection by Genus (Unweighted)", 
        subtitle = "Among all birds screened for each genus", 
        x = "\n Genus", y = "Percent of birds infected")
 wald_boxes_chart2
@@ -621,7 +622,7 @@ wald_boxes_chart3 <- ggplot(wald_boxes3, aes(genera, y)) +
   scale_y_continuous(limits = c(0, 8)) +
   scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
   theme(legend.position = "none") +
-  labs(title = "Prevalnce of Malaria Infection by Genus (Weighted)", 
+  labs(title = "Prevalence of Malaria Infection by Genus (Weighted)", 
        subtitle = "Among all birds screened for each genus", 
        x = "\n Genus", y = "Percent of birds infected")
 wald_boxes_chart3
@@ -1096,7 +1097,7 @@ summary(rrb.glm4)
 crrw.glm1 <- glm(any_coinf_within ~ Host_order + Year + Country, data = Xdata_order_within, family = binomial)
 summary(crrw.glm1)
 
-crrw.glm2 <- glm(any_coinf_within ~ Host_family + Year  + Country, data = Xdata_family_within, family = binomial)
+crrw.glm2 <- glm(any_coinf_within ~ Host_family + Year + Country, data = Xdata_family_within, family = binomial)
 summary(crrw.glm2)
 
 crrw.glm3 <- glm(any_coinf_within ~ Host_genus + Year + Country, data = Xdata_genus_within, family = binomial)
@@ -1141,13 +1142,16 @@ nested2 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus),
                 data = Xdata_order_within, family = binomial)
 summary(nested2)
 
-nested3 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus / Host_species), 
-                data = Xdata_order_within, family = binomial)
+# nested3 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus / Host_species),  # TAKES A WHILE TO RUN
+#                data = Xdata_order_within, family = binomial)
 summary(nested3)
 
 anova(nested1, nested2)
 anova(nested2, nested3)
 anova(nested1, nested3)
+
+plot(nested1, resid(., type = "pearson") ~ fitted(.) | any_coinf_within) ## concerning... need to look at weighting (https://slcladal.github.io/regression.html)
+
 ```
 
 NOTE: Try removing Kenya for regressions with elevation as covariate (doesn't behave the same as high elevation locations); could look specifically at Mozambique for differences by elevation (sampling locations)
@@ -1166,28 +1170,6 @@ cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
 cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 3)
 plot(cl.table2$Elevation, cl.table2$coinf_between_order, col = cluster2$cluster)
 
-## Family
-cl.table1 <- malaria[, c('Host_family', 'Elevation', 'coinf_within_family')]
-cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
-cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 4)
-plot(cl.table1$Elevation, cl.table1$coinf_within_family, col = cluster1$cluster)
-
-cl.table2 <- malaria[, c('Host_family', 'Elevation', 'coinf_between_family')]
-cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
-cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 4)
-plot(cl.table2$Elevation, cl.table2$coinf_between_family, col = cluster2$cluster)
-
-## Genus
-cl.table1 <- malaria[, c('Host_order', 'Elevation', 'coinf_within_genus')]
-cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
-cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 4)
-plot(cl.table1$Elevation, cl.table1$coinf_within_genus, col = cluster1$cluster)
-
-cl.table2 <- malaria[, c('Host_order', 'Elevation', 'coinf_between_genus')]
-cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
-cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 4)
-plot(cl.table2$Elevation, cl.table2$coinf_between_genus, col = cluster2$cluster)
-
 ## Species
 cl.table1 <- malaria[, c('Host_order', 'Elevation', 'coinf_within_species')]
 cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
@@ -1198,6 +1180,30 @@ cl.table2 <- malaria[, c('Host_order', 'Elevation', 'coinf_between_species')]
 cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
 cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 5)
 plot(cl.table2$Elevation, cl.table2$coinf_between_species, col = cluster2$cluster)
+```
+
+```{r clustering.year}
+## Order
+cl.table1 <- malaria[, c('Host_order', 'Year', 'coinf_within_order')]
+cl.table1 <- cl.table1[!is.na(cl.table1$Year),]
+cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 5)
+plot(jitter(cl.table1$Year), jitter(cl.table1$coinf_within_order), col = cluster1$cluster)
+
+cl.table2 <- malaria[, c('Host_order', 'Year', 'coinf_between_order')]
+cl.table2 <- cl.table2[!is.na(cl.table2$Year),]
+cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 5)
+plot(jitter(cl.table2$Year), jitter(cl.table2$coinf_between_order), col = cluster2$cluster)
+
+## Species
+cl.table3 <- malaria[, c('Host_species', 'Year', 'coinf_within_species')]
+cl.table3 <- cl.table3[!is.na(cl.table3$Year),]
+cluster3 <- kmeans(cl.table3[,c(2,3)], centers = 5)
+plot(jitter(cl.table3$Year), jitter(cl.table3$coinf_within_species), col = cluster3$cluster)
+
+cl.table4 <- malaria[, c('Host_species', 'Year', 'coinf_between_species')]
+cl.table4 <- cl.table4[!is.na(cl.table4$Year),]
+cluster4 <- kmeans(cl.table4[,c(2,3)], centers = 5)
+plot(jitter(cl.table4$Year), jitter(cl.table4$coinf_between_species), col = cluster4$cluster)
 ```
 
 
@@ -1245,6 +1251,30 @@ summary(Pglm2)
 
 Pglm3 <- glm(plas_coinf ~ Host_genus, data = malaria, family = binomial)
 summary(Pglm3)
+
+#### CLUSTERING FOR FAMILY AND GENUS (ELEVATION)
+## Family
+cl.table1 <- malaria[, c('Host_family', 'Elevation', 'coinf_within_family')]
+cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
+cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 4)
+plot(cl.table1$Elevation, cl.table1$coinf_within_family, col = cluster1$cluster)
+
+cl.table2 <- malaria[, c('Host_family', 'Elevation', 'coinf_between_family')]
+cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
+cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 4)
+plot(cl.table2$Elevation, cl.table2$coinf_between_family, col = cluster2$cluster)
+
+## Genus
+cl.table1 <- malaria[, c('Host_order', 'Elevation', 'coinf_within_genus')]
+cl.table1 <- cl.table1[!is.na(cl.table1$Elevation),]
+cluster1 <- kmeans(cl.table1[,c(2,3)], centers = 4)
+plot(cl.table1$Elevation, cl.table1$coinf_within_genus, col = cluster1$cluster)
+
+cl.table2 <- malaria[, c('Host_order', 'Elevation', 'coinf_between_genus')]
+cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
+cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 4)
+plot(cl.table2$Elevation, cl.table2$coinf_between_genus, col = cluster2$cluster)
+
 
 
 ```
