@@ -906,7 +906,7 @@ MODEL IDEAS:
 - Prediction of co-infection with random forest using family co-infection rate as predictor
 - Zero-inflated Beta regression
 
-Look into nested models... (but are there enough obs in genus, species?)
+NESTED MODELS
 
 CLUSTERING:
 * k-means clustering
