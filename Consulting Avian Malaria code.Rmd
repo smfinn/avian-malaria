@@ -17,6 +17,7 @@ library(gmodels)
 library(ggplot2)
 library(MASS)
 library(lme4)
+library(mice)
 theme_set(
   theme_minimal()
 )
@@ -44,6 +45,10 @@ malaria$Elevation <- as.numeric(malaria$Elevation)
 malaria$Lat <- as.numeric(malaria$Lat)
 malaria$Long <- as.numeric(malaria$Long)
 
+# Impute missing values of Elevation using CARTs
+malaria$Elevation[is.na(malaria$Elevation)] <- 
+  mice.impute.mean(y = malaria$Elevation, ry = as.vector(!is.na(malaria$Elevation)))
+
 # Standardize sex reporting
 malaria$Sex[malaria$Sex == "f"] <- "F"
 malaria$Sex[malaria$Sex == "m"] <- "M"
@@ -51,7 +56,6 @@ malaria$Sex[malaria$Sex == "?"] <- "X"
 malaria$Sex[malaria$Sex == "N"] <- "X"
 malaria$Sex[malaria$Sex == "0"] <- "X"
 malaria$Sex[malaria$Sex == "No BS"] <- "X"
-table(malaria$Sex)
 
 # Convert negative test results to zeros
 malaria <- malaria %>% mutate(positive_l = ifelse(is.na(positive_l), 0, 1),
@@ -163,25 +167,32 @@ malaria.posH <- malaria[malaria$positive_h == 1,]
 posH.infspecies <- as.data.frame(table(malaria.posH$Host_species, malaria.posH$haemo_coinf))
 malaria.posP <- malaria[malaria$positive_p == 1,]
 posP.infspecies <- as.data.frame(table(malaria.posP$Host_species, malaria.posP$haemo_coinf))
-coinf_species_infected <- data.frame(
-  Host_species = posL.infspecies$Var1[co$Var2==0],
+coinfL_species_infected <- data.frame(
+  Host_species = posL.infspecies$Var1[posL.infspecies$Var2==0],
   yes.Lw = as.numeric(posL.infspecies$Freq[posL.infspecies$Var2==1]),
-  no.Lw = as.numeric(posL.infspecies$Freq[posL.infspecies$Var2==0]),
+  no.Lw = as.numeric(posL.infspecies$Freq[posL.infspecies$Var2==0]))
+coinfH_species_infected <- data.frame(
+  Host_species = posH.infspecies$Var1[posH.infspecies$Var2==0],
   yes.Hw = as.numeric(posH.infspecies$Freq[posH.infspecies$Var2==1]),
-  no.Hw = as.numeric(posH.infspecies$Freq[posH.infspecies$Var2==0]),
+  no.Hw = as.numeric(posH.infspecies$Freq[posH.infspecies$Var2==0]))
+coinfP_species_infected <- data.frame(
+  Host_species = posP.infspecies$Var1[posP.infspecies$Var2==0],
   yes.Pw = as.numeric(posP.infspecies$Freq[posP.infspecies$Var2==1]),
   no.Pw = as.numeric(posP.infspecies$Freq[posP.infspecies$Var2==0]))
-coinf_species_infected$coinf_Lwithin_infected <- coinf_species_infected$yes.Lw / 
-  (coinf_species_infected$yes.Lw + coinf_species_infected$no.Lw)
-coinf_species_infected$coinf_Pwithin_infected <- coinf_species_infected$yes.Pw / 
-  (coinf_species_infected$yes.Pw + coinf_species_infected$no.Pw)
-coinf_species_infected$coinf_Hwithin_infected <- coinf_species_infected$yes.Hw / 
-  (coinf_species_infected$yes.Hw + coinf_species_infected$no.Hw)
-coinf_species_infected <- coinf_species_infected[, c("Host_species",
-   "coinf_Lwithin_infected", "coinf_Pwithin_infected", "coinf_Hwithin_infected")]
+coinfL_species_infected$coinf_Lwithin_infected <- (coinfL_species_infected$yes.Lw / 
+  (coinfL_species_infected$yes.Lw + coinfL_species_infected$no.Lw))
+coinfP_species_infected$coinf_Pwithin_infected <- (coinfP_species_infected$yes.Pw / 
+  (coinfP_species_infected$yes.Pw + coinfP_species_infected$no.Pw))
+coinfH_species_infected$coinf_Hwithin_infected <- (coinfH_species_infected$yes.Hw / 
+  (coinfH_species_infected$yes.Hw + coinfH_species_infected$no.Hw))
+coinfL_species_infected <- coinfL_species_infected[, c("Host_species", "coinf_Lwithin_infected")]
+coinfH_species_infected <- coinfH_species_infected[, c("Host_species", "coinf_Hwithin_infected")]
+coinfP_species_infected <- coinfP_species_infected[, c("Host_species", "coinf_Pwithin_infected")]
 
 # Add co-infection rates among infected birds to main data frame
-malaria <- merge(malaria, coinf_species_infected, by = "Host_species")
+malaria <- merge(malaria, coinfL_species_infected, by = "Host_species", all.x = T)
+malaria <- merge(malaria, coinfH_species_infected, by = "Host_species", all.x = T)
+malaria <- merge(malaria, coinfP_species_infected, by = "Host_species", all.x = T)
 
 # Convert number of groups by taxonomic level to data frames
 order_freqs <- as.data.frame(table(malaria$Host_order))
@@ -210,6 +221,26 @@ Xdata_order_between <- malaria[malaria$Host_order %in% order_reduced_between$Var
 Xdata_family_between <- malaria[malaria$Host_family %in% family_reduced_between$Var1,]
 Xdata_genus_between <- malaria[malaria$Host_genus %in% genus_reduced_between$Var1,]
 Xdata_species_between <- malaria[malaria$Host_species %in% species_reduced_between$Var1,]
+
+# Change reference groups to mode for each taxonomic level (for regression)
+Xdata_order_within$Host_order <- relevel(as.factor(Xdata_order_within$Host_order), "Passeriformes")
+Xdata_family_within$Host_family <- relevel(as.factor(Xdata_family_within$Host_family), "Pycnonotidae")
+Xdata_genus_within$Host_genus <- relevel(as.factor(Xdata_genus_within$Host_genus), "Calandrella")
+Xdata_species_within$Host_species <- relevel(as.factor(Xdata_species_within$Host_species), "cinerea")
+Xdata_order_between$Host_order <- relevel(as.factor(Xdata_order_between$Host_order), "Passeriformes")
+Xdata_family_between$Host_family <- relevel(as.factor(Xdata_family_between$Host_family), "Pycnonotidae")
+Xdata_genus_between$Host_genus <- relevel(as.factor(Xdata_genus_between$Host_genus), "Calandrella")
+Xdata_species_between$Host_species <- relevel(as.factor(Xdata_species_between$Host_species), "cinerea")
+
+# Change reference groups to mode (Kenya) for country
+Xdata_order_within$Country <- relevel(as.factor(Xdata_order_within$Country), "Kenya")
+Xdata_family_within$Country <- relevel(as.factor(Xdata_family_within$Country), "Kenya")
+Xdata_genus_within$Country <- relevel(as.factor(Xdata_genus_within$Country), "Kenya")
+Xdata_species_within$Country <- relevel(as.factor(Xdata_species_within$Country), "Kenya")
+Xdata_order_between$Country <- relevel(as.factor(Xdata_order_between$Country), "Kenya")
+Xdata_family_between$Country <- relevel(as.factor(Xdata_family_between$Country), "Kenya")
+Xdata_genus_between$Country <- relevel(as.factor(Xdata_genus_between$Country), "Kenya")
+Xdata_species_between$Country <- relevel(as.factor(Xdata_species_between$Country), "Kenya")
 
 # Change taxonomic variables to factors
 malaria <- malaria %>% mutate(Host_order = as.factor(malaria$Host_order),
@@ -1033,91 +1064,90 @@ summary(rb.glm4)
 #### Logistic regression: Reduced taxonomic groups by counts; reference group is mode
 ```{r altreference.reduced.logreg}
 # Any within-genus co-infection
-Xdata_order_within$Host_order <- relevel(as.factor(Xdata_order_within$Host_order), "Passeriformes")
 rrw.glm1 <- glm(any_coinf_within ~ Host_order, data = Xdata_order_within, family = binomial)
 summary(rrw.glm1)
 
-Xdata_family_within$Host_family <- relevel(as.factor(Xdata_family_within$Host_family), "Pycnonotidae")
 rrw.glm2 <- glm(any_coinf_within ~ Host_family, data = Xdata_family_within, family = binomial)
 summary(rrw.glm2)
 
-Xdata_genus_within$Host_genus <- relevel(as.factor(Xdata_genus_within$Host_genus), "Calandrella")
 rrw.glm3 <- glm(any_coinf_within ~ Host_genus, data = Xdata_genus_within, family = binomial)
 summary(rrw.glm3)
 
-Xdata_species_within$Host_species <- relevel(as.factor(Xdata_species_within$Host_species), "cinerea")
 rrw.glm4 <- glm(any_coinf_within ~ Host_species, data = Xdata_species_within, family = binomial)
 summary(rrw.glm4)
 
 # Any between-genera co-infection
-Xdata_order_between$Host_order <- relevel(as.factor(Xdata_order_between$Host_order), "Passeriformes")
 rrb.glm1 <- glm(any_coinf_between ~ Host_order, data = Xdata_order_between, family = binomial)
 summary(rrb.glm1)
 
-Xdata_family_between$Host_family <- relevel(as.factor(Xdata_family_between$Host_family), "Pycnonotidae")
 rrb.glm2 <- glm(any_coinf_between ~ Host_family, data = Xdata_family_between, family = binomial)
 summary(rrb.glm2)
 
-Xdata_genus_between$Host_genus <- relevel(as.factor(Xdata_genus_between$Host_genus), "Calandrella")
 rrb.glm3 <- glm(any_coinf_between ~ Host_genus, data = Xdata_genus_between, family = binomial)
 summary(rrb.glm3)
 
-Xdata_species_between$Host_species <- relevel(as.factor(Xdata_species_between$Host_species), "cinerea")
 rrb.glm4 <- glm(any_coinf_between ~ Host_species, data = Xdata_species_between, family = binomial)
 summary(rrb.glm4)
 ```
 
-#### Logistic regression: Reduced taxonomic groups by counts; reference group is mode; add covariates (Year, Country, Elevation)
+#### Logistic regression: Reduced taxonomic groups by counts; reference group is mode; add covariates (Year, Country)
 ```{r cov.altreference.reduced.logreg}
 # Any within-genus co-infection
-Xdata_order_within$Country <- relevel(as.factor(Xdata_order_within$Country), "Kenya")
-crrw.glm1 <- glm(any_coinf_within ~ Host_order + Year + Elevation + Country, data = Xdata_order_within, family = binomial)
+crrw.glm1 <- glm(any_coinf_within ~ Host_order + Year + Country, data = Xdata_order_within, family = binomial)
 summary(crrw.glm1)
 
-Xdata_family_within$Country <- relevel(as.factor(Xdata_family_within$Country), "Kenya")
-crrw.glm2 <- glm(any_coinf_within ~ Host_family + Year + Elevation + Country, data = Xdata_family_within, family = binomial)
+crrw.glm2 <- glm(any_coinf_within ~ Host_family + Year  + Country, data = Xdata_family_within, family = binomial)
 summary(crrw.glm2)
 
-Xdata_genus_within$Country <- relevel(as.factor(Xdata_genus_within$Country), "Kenya")
-crrw.glm3 <- glm(any_coinf_within ~ Host_genus + Year + Elevation + Country, data = Xdata_genus_within, family = binomial)
+crrw.glm3 <- glm(any_coinf_within ~ Host_genus + Year + Country, data = Xdata_genus_within, family = binomial)
 summary(crrw.glm3)
 
-Xdata_species_within$Country <- relevel(as.factor(Xdata_species_within$Country), "Kenya")
-crrw.glm4 <- glm(any_coinf_within ~ Host_species + Year + Elevation + Country, data = Xdata_species_within, family = binomial)
+crrw.glm4 <- glm(any_coinf_within ~ Host_species + Year + Country, data = Xdata_species_within, family = binomial)
 summary(crrw.glm4)
 
 # Any between-genera co-infection
-Xdata_order_between$Country <- relevel(as.factor(Xdata_order_between$Country), "Kenya")
-crrb.glm1 <- glm(any_coinf_between ~ Host_order + Year + Elevation + Country, data = Xdata_order_between, family = binomial)
+crrb.glm1 <- glm(any_coinf_between ~ Host_order + Year + Country, data = Xdata_order_between, family = binomial)
 summary(crrb.glm1)
 
-Xdata_family_between$Country <- relevel(as.factor(Xdata_family_between$Country), "Kenya")
-crrb.glm2 <- glm(any_coinf_between ~ Host_family + Year + Elevation + Country, data = Xdata_family_between, family = binomial)
+crrb.glm2 <- glm(any_coinf_between ~ Host_family + Year + Country, data = Xdata_family_between, family = binomial)
 summary(crrb.glm2)
 
-Xdata_genus_between$Country <- relevel(as.factor(Xdata_genus_between$Country), "Kenya")
-crrb.glm3 <- glm(any_coinf_between ~ Host_genus + Year + Elevation + Country, data = Xdata_genus_between, family = binomial)
+crrb.glm3 <- glm(any_coinf_between ~ Host_genus + Year + Country, data = Xdata_genus_between, family = binomial)
 summary(crrb.glm3)
 
-Xdata_species_between$Country <- relevel(as.factor(Xdata_species_between$Country), "Kenya")
-crrb.glm4 <- glm(any_coinf_between ~ Host_species + Year + Elevation + Country, data = Xdata_species_between, family = binomial)
+crrb.glm4 <- glm(any_coinf_between ~ Host_species + Year + Country, data = Xdata_species_between, family = binomial)
 summary(crrb.glm4)
 ```
 
-
+#### Nested logistic regression:
 ```{r nested.logreg}
-glm.full <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus + 
-                  Host_species + Year + Elevation + Country, 
-                data = Xdata_species_within, family = binomial)
-summary(glm.full)
+## Full models
+# glm.full.w <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus + 
+#                   Host_species + Year  + Country, 
+#                 data = Xdata_species_within, family = binomial)
+# summary(glm.full.w)
+# 
+# glm.full.b <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus + 
+#                   Host_species + Year  + Country, 
+#                 data = Xdata_species_between, family = binomial)
+# summary(glm.full.b)
 
-nested1 <- glm(any_coinf_within ~ Host_order/Host_family, data = Xdata_order_within,
-               family = binomial)
+## Nested models
+nested1 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family), 
+                data = Xdata_order_within, family = binomial)
 summary(nested1)
 
-nested2 <- lmer(any_coinf_within ~ Year + Elevation + Country + 
-                (1 | Host_order / Host_genus / Host_family / Host_species), data = Xdata_order_within)
+nested2 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus), 
+                data = Xdata_order_within, family = binomial)
 summary(nested2)
+
+nested3 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus / Host_species), 
+                data = Xdata_order_within, family = binomial)
+summary(nested3)
+
+anova(nested1, nested2)
+anova(nested2, nested3)
+anova(nested1, nested3)
 ```
 
 NOTE: Try removing Kenya for regressions with elevation as covariate (doesn't behave the same as high elevation locations); could look specifically at Mozambique for differences by elevation (sampling locations)
