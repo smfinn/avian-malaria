@@ -316,7 +316,7 @@ summary(glm(infected_any ~ Country, data = malaria, family = binomial))
 ```
 
 
-#### Infections by sex
+#### Infections by sex  
 ```{r}
 leuco.sex <- as.data.frame(table(malaria$positive_l[malaria$Sex != "X"], 
                                  malaria$Sex[malaria$Sex != "X"]))
