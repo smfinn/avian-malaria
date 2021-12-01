@@ -260,7 +260,7 @@ ggsave("haemocrodius by country.png", haemo_eda, width = 7, height = 4)
 ```
 
 ```{r}
-plas.country <- as.data.frame(table(malaria$positive_p, malaria$Country))
+plas.country <- as.data.frame(table(malaria$positive_p, malaria$Country))  
 plas_eda1 <- ggplot(plas.country, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "stack") +
   scale_fill_brewer(palette = 7) +
