@@ -24,7 +24,6 @@ theme_set(
 
 $\hat\pi \pm z_{0.025} * \sqrt{\dfrac{\hat\pi * (1 - \hat\pi)}{n}}$
 
-
 ```{r clean}
 malaria <- read_excel("MalariaSampling_MasterFile_Sept23.xlsx")
 
@@ -138,17 +137,18 @@ coinf_species <- data.frame(Host_species = co$Var1[co$Var2==0],
                             no.b = as.numeric(cb$Freq[cb$Var2==0]),
                             yes.Lw = as.numeric(cLw$Freq[cLw$Var2==1]),
                             no.Lw = as.numeric(cLw$Freq[cLw$Var2==0]),
-                            yes.Pw = as.numeric(cPw$Var2[cPw$Var2==1]),
-                            no.Pw = as.numeric(cPw$Var2[cPw$Var2==0]),
-                            yes.Hw = as.numeric(cHw$Var2[cHw$Var2==1]),
-                            no.Hw = as.numeric(cHw$Var2[cHw$Var2==0]))
+                            yes.Pw = as.numeric(cPw$Freq[cPw$Var2==1]),
+                            no.Pw = as.numeric(cPw$Freq[cPw$Var2==0]),
+                            yes.Hw = as.numeric(cHw$Freq[cHw$Var2==1]),
+                            no.Hw = as.numeric(cHw$Freq[cHw$Var2==0]))
 coinf_species$coinf_within_species <- coinf_species$yes.w / (coinf_species$yes.w + coinf_species$no.w)
 coinf_species$coinf_between_species <- coinf_species$yes.b / (coinf_species$yes.b + coinf_species$no.b)
 coinf_species$coinf_Lwithin_species <- coinf_species$yes.Lw / (coinf_species$yes.Lw + coinf_species$no.Lw)
 coinf_species$coinf_Pwithin_species <- coinf_species$yes.Pw / (coinf_species$yes.Pw + coinf_species$no.Pw)
 coinf_species$coinf_Hwithin_species <- coinf_species$yes.Hw / (coinf_species$yes.Hw + coinf_species$no.Hw)
 coinf_species <- coinf_species[,c("Host_species", "coinf_within_species", 
-                                  "coinf_between_species", "coinf_Lwithin_species", "coinf_Pwithin_species", "coinf_Hwithin_species")]
+                                  "coinf_between_species", "coinf_Lwithin_species", 
+                                  "coinf_Pwithin_species", "coinf_Hwithin_species")]
 
 # Add co-infection rates to main data frame
 malaria <- merge(malaria, coinf_order, by = "Host_order")
@@ -156,13 +156,40 @@ malaria <- merge(malaria, coinf_family, by = "Host_family")
 malaria <- merge(malaria, coinf_genus, by = "Host_genus")
 malaria <- merge(malaria, coinf_species, by = "Host_species")
 
+# Create co-infection rates by species for birds that tested positive for malaria
+malaria.posL <- malaria[malaria$positive_l == 1,]
+posL.infspecies <- as.data.frame(table(malaria.posL$Host_species, malaria.posL$leuco_coinf))
+malaria.posH <- malaria[malaria$positive_h == 1,]
+posH.infspecies <- as.data.frame(table(malaria.posH$Host_species, malaria.posH$haemo_coinf))
+malaria.posP <- malaria[malaria$positive_p == 1,]
+posP.infspecies <- as.data.frame(table(malaria.posP$Host_species, malaria.posP$haemo_coinf))
+coinf_species_infected <- data.frame(
+  Host_species = posL.infspecies$Var1[co$Var2==0],
+  yes.Lw = as.numeric(posL.infspecies$Freq[posL.infspecies$Var2==1]),
+  no.Lw = as.numeric(posL.infspecies$Freq[posL.infspecies$Var2==0]),
+  yes.Hw = as.numeric(posH.infspecies$Freq[posH.infspecies$Var2==1]),
+  no.Hw = as.numeric(posH.infspecies$Freq[posH.infspecies$Var2==0]),
+  yes.Pw = as.numeric(posP.infspecies$Freq[posP.infspecies$Var2==1]),
+  no.Pw = as.numeric(posP.infspecies$Freq[posP.infspecies$Var2==0]))
+coinf_species_infected$coinf_Lwithin_infected <- coinf_species_infected$yes.Lw / 
+  (coinf_species_infected$yes.Lw + coinf_species_infected$no.Lw)
+coinf_species_infected$coinf_Pwithin_infected <- coinf_species_infected$yes.Pw / 
+  (coinf_species_infected$yes.Pw + coinf_species_infected$no.Pw)
+coinf_species_infected$coinf_Hwithin_infected <- coinf_species_infected$yes.Hw / 
+  (coinf_species_infected$yes.Hw + coinf_species_infected$no.Hw)
+coinf_species_infected <- coinf_species_infected[, c("Host_species",
+   "coinf_Lwithin_infected", "coinf_Pwithin_infected", "coinf_Hwithin_infected")]
+
+# Add co-infection rates among infected birds to main data frame
+malaria <- merge(malaria, coinf_species_infected, by = "Host_species")
+
 # Convert number of groups by taxonomic level to data frames
 order_freqs <- as.data.frame(table(malaria$Host_order))
 family_freqs <- as.data.frame(table(malaria$Host_family))
 genus_freqs <- as.data.frame(table(malaria$Host_genus))
 species_freqs <- as.data.frame(table(malaria$Host_species))
 
-# Create reduced version of data frames with counts of at least
+# Create reduced version of data frames with counts that create minimum expected values in chi-squared tests
 order_reduced_within <- order_freqs[order_freqs$Freq >= 25,]
 family_reduced_within <- family_freqs[family_freqs$Freq >= 40,]
 genus_reduced_within <- genus_freqs[genus_freqs$Freq >= 40,]
@@ -210,8 +237,6 @@ elevation <- ggplot(malaria, aes(Elevation)) +
 elevation
 ```
 
-NOTE: CHANGE POSITIVITY -> PREVALENCE (1 = positive, 0 = not positive (NOT negative))
-
 #### Infections by country
 ```{r}
 leuco.country <- as.data.frame(table(malaria$positive_l, malaria$Country))
@@ -225,17 +250,15 @@ leuco_eda1 <- ggplot(leuco.country, aes(Var2, Freq, group = Var1)) +
 
 leuco_eda2 <- ggplot(leuco.country, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
-  scale_fill_brewer(name = "Positivity") +
+  scale_fill_brewer(name = "Test result", labels = c("Not positive", "Positive")) +
   labs(title = "Standardized (percent)", x = "Country", y = NULL) +
   theme(axis.text.x = element_text(angle = 15),
         title = element_text(size = 9))
 
 leuco_eda <- grid.arrange(leuco_eda1, leuco_eda2, nrow = 1, 
-             top = "Leucocytozoon Positivity by Country")
+             top = "Leucocytozoon Prevalence by Country")
 ggsave("leucocytozoon by country.png", leuco_eda, width = 7, height = 4)
 ```
-
-NOTE: HAEMOPROTEUS
 
 ```{r}
 haemo.country <- as.data.frame(table(malaria$positive_h, malaria$Country))
@@ -249,13 +272,14 @@ haemo_eda1 <- ggplot(haemo.country, aes(Var2, Freq, group = Var1)) +
 
 haemo_eda2 <- ggplot(haemo.country, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
-  scale_fill_brewer(palette = 4, name = "Positivity") +
+  scale_fill_brewer(palette = 4, name = "Test result", 
+                    labels = c("Not positive", "Positive")) +
   labs(title = "Standardized (percent)", x = "Country", y = NULL) +
   theme(axis.text.x = element_text(angle = 15),
         title = element_text(size = 9))
 
 haemo_eda <- grid.arrange(haemo_eda1, haemo_eda2, nrow = 1, 
-             top = "Haemocrodius Positivity by Country")
+             top = "Haemocrodius Prevalence by Country")
 ggsave("haemocrodius by country.png", haemo_eda, width = 7, height = 4)
 ```
 
@@ -271,13 +295,14 @@ plas_eda1 <- ggplot(plas.country, aes(Var2, Freq, group = Var1)) +
 
 plas_eda2 <- ggplot(plas.country, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
-  scale_fill_brewer(palette = 7, name = "Positivity") +
+  scale_fill_brewer(palette = 7, name = "Test result", 
+                    labels = c("Not positive", "Positive")) +
   labs(title = "Standardized (percent)", x = "Country", y = NULL) +
   theme(axis.text.x = element_text(angle = 15),
         title = element_text(size = 9))
 
 plas_eda <- grid.arrange(plas_eda1, plas_eda2, nrow = 1, 
-             top = "Plasmodium Positivity by Country")
+             top = "Plasmodium Prevalence by Country")
 ggsave("plasmodium by country.png", plas_eda, width = 7, height = 4)
 ```
 
@@ -304,12 +329,12 @@ leuco_eda3 <- ggplot(leuco.sex, aes(Var2, Freq, group = Var1)) +
 
 leuco_eda4 <- ggplot(leuco.sex, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
-  scale_fill_brewer(name = "Positivity") +
+  scale_fill_brewer(name = "Test result", labels = c("Not positive", "Positive")) +
   labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
   theme(title = element_text(size = 9))
 
 leuco_eda_sex <- grid.arrange(leuco_eda3, leuco_eda4, nrow = 1, 
-             top = "Leucocytozoon Positivity by Sex")
+             top = "Leucocytozoon Prevalence by Sex")
 
 ggsave("leucocytozoon by sex.png", leuco_eda_sex, width = 4, height = 3)
 ```
@@ -326,12 +351,13 @@ haemo_eda3 <- ggplot(haemo.sex, aes(Var2, Freq, group = Var1)) +
 
 haemo_eda4 <- ggplot(haemo.sex, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
-  scale_fill_brewer(palette = 4, name = "Positivity") +
+  scale_fill_brewer(palette = 4, name = "Test result", 
+                    labels = c("Not positive", "Positive")) +
   labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
   theme(title = element_text(size = 9))
 
 haemo_eda_sex <- grid.arrange(haemo_eda3, haemo_eda4, nrow = 1, 
-             top = "Haemocrodius Positivity by Sex")
+             top = "Haemocrodius Prevalence by Sex")
 ggsave("haemocrodius by sex.png", haemo_eda_sex, width = 4, height = 3)
 ```
 
@@ -347,12 +373,13 @@ plas_eda3 <- ggplot(plas.sex, aes(Var2, Freq, group = Var1)) +
 
 plas_eda4 <- ggplot(plas.sex, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
-  scale_fill_brewer(palette = 7, name = "Positivity") +
+  scale_fill_brewer(palette = 7, name = "Test result", 
+                    labels = c("Not positive", "Positive")) +
   labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
   theme(title = element_text(size = 9))
 
 plas_eda_sex <- grid.arrange(plas_eda3, plas_eda4, nrow = 1, 
-             top = "Plasmodium Positivity by Sex")
+             top = "Plasmodium Prevalence by Sex")
 ggsave("plasmodium by sex.png", plas_eda_sex, width = 4, height = 3)
 ```
 
@@ -374,36 +401,52 @@ NOTE: Create survey weights -- weight based on each taxonomic level
 Compare with using the negative binomial distribution for confidence intervals
 
 #### *Among birds who are infected*
-
 ```{r}
 total_n <- 3418
 
 # Leucocytozoon
 n_L <- sum(malaria$positive_l, na.rm = T) # How many positive 
 p_L <- sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T) / n_L
+w.p.L <- mean(coinf_species_infected$coinf_Lwithin_infected, na.rm = T)
+cat("Unweighted p-hat for Leuco:", round(p_L, 4), "\n")
+cat("Weighted p-hat for Leuco:", round(w.p.L, 4), "\n")
+
 ci_L.lower <- p_L - qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
 ci_L.upper <- p_L + qnorm(0.975) * sqrt((p_L * (1 - p_L)) / n_L)
-cat("Leucocytozoon 95% CI: [", round(c(ci_L.lower, ci_L.upper)*100, 2), "]")
+cat("Leucocytozoon unweighted 95% CI: [", round(c(ci_L.lower, ci_L.upper)*100, 2), "]", "\n")
+wci_L.lower <- w.p.L - qnorm(0.975) * sqrt((w.p.L * (1 - w.p.L)) / n_L)
+wci_L.upper <- w.p.L + qnorm(0.975) * sqrt((w.p.L * (1 - w.p.L)) / n_L)
+cat("Leucocytozoon weighted 95% CI: [", round(c(wci_L.lower, wci_L.upper)*100, 2), "]", "\n", "\n")
 
 # Haemoproteus
 n_H <- sum(malaria$positive_h, na.rm = T) # How many positive 
 p_H <- sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T) / n_H
+w.p.H <- mean(coinf_species_infected$coinf_Hwithin_infected, na.rm = T)
+cat("Unweighted p-hat for Haemo:", round(p_H, 4), "\n")
+cat("Weighted p-hat for Haemo:", round(w.p.H, 4), "\n")
+
 ci_H.lower <- p_H - qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
 ci_H.upper <- p_H + qnorm(0.975) * sqrt((p_H * (1 - p_H)) / n_H)
-cat("Haemoproteus 95% CI: [", round(c(ci_H.lower, ci_H.upper)*100, 2), "]")
+cat("Haemoproteus unweighted 95% CI: [", round(c(ci_H.lower, ci_H.upper)*100, 2), "]", "\n")
+wci_H.lower <- w.p.H - qnorm(0.975) * sqrt((w.p.H * (1 - w.p.H)) / n_H)
+wci_H.upper <- w.p.H + qnorm(0.975) * sqrt((w.p.H * (1 - w.p.H)) / n_H)
+cat("Haemoproteus weighted 95% CI: [", round(c(wci_H.lower, wci_H.upper)*100, 2), "]", "\n", "\n")
 
 # Plasmodium
 n_P <- sum(malaria$positive_p, na.rm = T) # How many positive 
 p_P <- sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T) / n_P
+w.p.P <- mean(coinf_species_infected$coinf_Pwithin_infected, na.rm = T)
+cat("Unweighted p-hat for Plasmodium:", round(p_P, 4), "\n")
+cat("Weighted p-hat for Plasmodium:", round(w.p.P, 4), "\n")
+
 ci_P.lower <- p_P - qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
 ci_P.upper <- p_P + qnorm(0.975) * sqrt((p_P * (1 - p_P)) / n_P)
-cat("Plasmodium 95% CI: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]")
+cat("Plasmodium unweighted 95% CI: [", round(c(ci_P.lower, ci_P.upper)*100, 2), "]", "\n")
+wci_P.lower <- w.p.P - qnorm(0.975) * sqrt((w.p.P * (1 - w.p.P)) / n_P)
+wci_P.upper <- w.p.P + qnorm(0.975) * sqrt((w.p.P * (1 - w.p.P)) / n_P)
+cat("Plasmodium weighted 95% CI: [", round(c(wci_P.lower, wci_P.upper)*100, 2), "]", "\n", "\n")
+
 ```
-
-Leucocytozoon: [23.28%, 29.59%]
-Haemoproteus: [10.94%, 18.37%]
-Plasmodium: [18.88%, 24.75%]
-
 
 ```{r}
 genera <- c("Leucocytozoon", "Haemoproteus", "Plasmodium")
@@ -422,12 +465,38 @@ wald_boxes_chart <- ggplot(wald_boxes, aes(genera, y)) +
   scale_y_continuous(limits = c(0, 30)) +
   scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
   theme(legend.position = "none") +
-  labs(title = "Frequency of Malaria Infection Frequency by Genus", 
-       subtitle = "Among birds infected with genus",
-       x = "Genus", y = "Percent of birds infected")
+  labs(title = "Prevalence of Malaria Infection by Genus (Unweighted)", 
+       subtitle = "Among birds infected with each genus",
+       x = "\n Genus", y = "Percent of birds infected")
 wald_boxes_chart
 
 ggsave("frequency by genus1.png", wald_boxes_chart, height = 4.5, width = 5)
+```
+
+
+```{r}
+genera <- c("Leucocytozoon", "Haemoproteus", "Plasmodium")
+y <- c(w.p.L*100, w.p.H*100, w.p.P*100)
+ymin <- c(wci_L.lower*100, wci_H.lower*100, wci_P.lower*100)
+ymax <- c(wci_L.upper*100, wci_H.upper*100, wci_P.upper*100)
+wald_boxes.w <- as.data.frame(cbind(genera, y, ymin, ymax))
+wald_boxes.w <- wald_boxes.w %>% mutate(y = as.numeric(y),
+                                    ymin = as.numeric(ymin),
+                                    ymax = as.numeric(ymax))
+
+wald_boxes_chart.w <- ggplot(wald_boxes.w, aes(genera, y)) +
+  geom_pointrange(aes(x = genera, y = y, ymin = ymin, ymax = ymax,
+                      color = genera),
+                  fatten = 2.5, size = 1.5) +
+  scale_y_continuous(limits = c(0, 30)) +
+  scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
+  theme(legend.position = "none") +
+  labs(title = "Prevalence of Malaria Infection by Genus (Weighted)", 
+       subtitle = "Among birds infected with each genus",
+       x = "\n Genus", y = "Percent of birds infected")
+wald_boxes_chart.w
+
+ggsave("frequency by genus1 weighted.png", wald_boxes_chart.w, height = 4.5, width = 5)
 ```
 
 #### *Among all birds screened*
@@ -438,22 +507,46 @@ total_n <- 3418
 # Leucocytozoon
 num_screened_l <- sum(malaria$screened_l == "Yes") 
 p2_L <- sum(malaria$posdesig_l == 2 | malaria$posdesig_l == 3, na.rm = T) / num_screened_l
+w.phat.L <- mean(coinf_species$coinf_Lwithin_species)
+cat("Unweighted p-hat for Leuco:", round(p2_L, 4), "\n")
+cat("Weighted p-hat for Leuco:", round(w.phat.L, 4), "\n")
+
 ci2_L.lower <- p2_L - qnorm(0.975) * sqrt((p2_L * (1 - p2_L)) / num_screened_l)
 ci2_L.upper <- p2_L + qnorm(0.975) * sqrt((p2_L * (1 - p2_L)) / num_screened_l)
-cat("Leucocytozoon 95% CI: [", round(c(ci2_L.lower, ci2_L.upper)*100, 2), "]")
+cat("Leucocytozoon unweighted 95% CI: [", round(c(ci2_L.lower, ci2_L.upper)*100, 2), "]", "\n")
+wci2_L.lower <- w.phat.L - qnorm(0.975) * sqrt((w.phat.L * (1 - w.phat.L)) / num_screened_l)
+wci2_L.upper <- w.phat.L + qnorm(0.975) * sqrt((w.phat.L * (1 - w.phat.L)) / num_screened_l)
+cat("Leucocytozoon weighted 95% CI: [", round(c(wci2_L.lower, wci2_L.upper)*100, 2), "]", "\n", "\n")
 
 # Haemoproteus
+w.phat.H <- mean(coinf_species$coinf_Hwithin_species)
 p2_H <- sum(malaria$posdesig_h == 2 | malaria$posdesig_h == 3, na.rm = T) / total_n
+cat("Unweighted p-hat for Haemo:", round(p2_H, 4), "\n")
+cat("Weighted p-hat for Haemo:", round(w.phat.H, 4), "\n")
+
 ci2_H.lower <- p2_H - qnorm(0.975) * sqrt((p2_H * (1 - p2_H)) / total_n)
 ci2_H.upper <- p2_H + qnorm(0.975) * sqrt((p2_H * (1 - p2_H)) / total_n)
-cat("Haemoproteus 95% CI: [", round(c(ci2_H.lower, ci2_H.upper)*100, 2), "]")
+cat("Haemoproteus unweighted 95% CI: [", round(c(ci2_H.lower, ci2_H.upper)*100, 2), "]", "\n")
+wci2_H.lower <- w.phat.H - qnorm(0.975) * sqrt((w.phat.H * (1 - w.phat.H)) / total_n)
+wci2_H.upper <- w.phat.H + qnorm(0.975) * sqrt((w.phat.H * (1 - w.phat.H)) / total_n)
+cat("Haemoproteus weighted 95% CI: [", round(c(wci2_H.lower, wci2_H.upper)*100, 2), "]", "\n", "\n")
 
 # Plasmodium
 p2_P <- sum(malaria$posdesig_p == 2 | malaria$posdesig_p == 3, na.rm = T) / total_n
+w.phat.P <- mean(coinf_species$coinf_Pwithin_species)
+cat("Unweighted p-hat for Plasmodium:", round(p2_P, 4), "\n")
+cat("Weighted p-hat for Plasmodium:", round(w.phat.P, 4), "\n")
+
 ci2_P.lower <- p2_P - qnorm(0.975) * sqrt((p2_P * (1 - p2_P)) / total_n)
 ci2_P.upper <- p2_P + qnorm(0.975) * sqrt((p2_P * (1 - p2_P)) / total_n)
-cat("Plasmodium 95% CI: [", round(c(ci2_P.lower, ci2_P.upper)*100, 2), "]")
+cat("Plasmodium unweighted 95% CI: [", round(c(ci2_P.lower, ci2_P.upper)*100, 2), "]", "\n")
+
+wci2_P.lower <- w.phat.P - qnorm(0.975) * sqrt((w.phat.P * (1 - w.phat.P)) / total_n)
+wci2_P.upper <- w.phat.P + qnorm(0.975) * sqrt((w.phat.P * (1 - w.phat.P)) / total_n)
+cat("Plasmodium weighted 95% CI: [", round(c(wci2_P.lower, wci2_P.upper)*100, 2), "]", "\n", "\n")
+
 ```
+
 
 ```{r}
 genera <- c("Leucocytozoon", "Haemoproteus", "Plasmodium")
@@ -472,14 +565,38 @@ wald_boxes_chart2 <- ggplot(wald_boxes2, aes(genera, y)) +
   scale_y_continuous(limits = c(0, 8)) +
   scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
   theme(legend.position = "none") +
-  labs(title = "Frequency of Malaria Infection Frequency by Genus", 
-       subtitle = "Among birds screened for genus", 
-       x = "Genus", y = "Percent of birds infected")
+  labs(title = "Prevalnce of Malaria Infection by Genus (Unweighted)", 
+       subtitle = "Among all birds screened for each genus", 
+       x = "\n Genus", y = "Percent of birds infected")
 wald_boxes_chart2
 
 ggsave("frequency by genus2.png", wald_boxes_chart2, height = 4.5, width = 5)
 ```
 
+```{r}
+genera <- c("Leucocytozoon", "Haemoproteus", "Plasmodium")
+y3 <- c(w.phat.L*100, w.phat.H*100, w.phat.P*100)
+ymin3 <- c(wci2_L.lower*100, wci2_H.lower*100, wci2_P.lower*100)
+ymax3 <- c(wci2_L.upper*100, wci2_H.upper*100, wci2_P.upper*100)
+wald_boxes3 <- as.data.frame(cbind(genera, y3, ymin3, ymax3))
+wald_boxes3 <- wald_boxes %>% mutate(y = as.numeric(y3),
+                                     ymin = as.numeric(ymin3),
+                                     ymax = as.numeric(ymax3))
+
+wald_boxes_chart3 <- ggplot(wald_boxes3, aes(genera, y)) +
+  geom_pointrange(aes(x = genera, y = y, ymin = ymin, ymax = ymax,
+                      color = genera),
+                  fatten = 2.5, size = 1.5) +
+  scale_y_continuous(limits = c(0, 8)) +
+  scale_color_manual(values = c("#1e7898", "#86b191", "#e49d60")) +
+  theme(legend.position = "none") +
+  labs(title = "Prevalnce of Malaria Infection by Genus (Weighted)", 
+       subtitle = "Among all birds screened for each genus", 
+       x = "\n Genus", y = "Percent of birds infected")
+wald_boxes_chart3
+
+ggsave("frequency by genus3.png", wald_boxes_chart3, height = 4.5, width = 5)
+```
 
 #### Bootstrapping: Among infected birds
 
@@ -643,9 +760,17 @@ coinfected_all <- sum((malaria$positive_l == 1 & malaria$positive_h == 1) |
     (malaria$positive_l == 1 & malaria$positive_p == 1) |
     (malaria$positive_h == 1 & malaria$positive_p == 1), na.rm = T)
 p3 <- coinfected_all / infected_all
+wp3 <- mean(coinf_species$coinf_between_species, na.rm = T)
+cat("Unweighted p-hat:", round(p3, 4), "\n")
+cat("Weighted p-hat:", round(wp3, 4), "\n")
+
 ci3.lower <- p3 - qnorm(0.975) * sqrt((p3 * (1 - p3)) / infected_all)
 ci3.upper <- p3 + qnorm(0.975) * sqrt((p3 * (1 - p3)) / infected_all)
-cat("95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "]")
+cat("Unweighted 95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "] \n")
+wci3.lower <- wp3 - qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / infected_all)
+wci3.upper <- wp3 + qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / infected_all)
+cat("Weighted 95% confidence interval: [", round(c(wci3.lower, wci3.upper)*100, 2), "] \n")
+
 ```
 
 #### *Among all birds screened*
@@ -653,9 +778,16 @@ cat("95% confidence interval: [", round(c(ci3.lower, ci3.upper)*100, 2), "]")
 ```{r}
 screened_all <- sum(malaria$screened_l=="Yes") # Leuco is only genus that didn't get tested for all birds
 p4 <- coinfected_all / screened_all
+cat("Unweighted p-hat:", round(p4, 4), "\n")
+cat("Weighted p-hat:", round(wp3, 4), "\n")
+
 ci4.lower <- p4 - qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
 ci4.upper <- p4 + qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
-cat("95% confidence interval: [", round(c(ci4.lower, ci4.upper)*100, 2), "]")
+cat("95% confidence interval: [", round(c(ci4.lower, ci4.upper)*100, 2), "] \n")
+wci4.lower <- wp3 - qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / screened_all)
+wci4.upper <- wp3 + qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / screened_all)
+cat("Weighted 95% confidence interval: [", round(c(wci3.lower, wci3.upper)*100, 2), "] \n")
+
 ```
 
 #### Bootstrapping: Among infected birds
@@ -979,10 +1111,13 @@ glm.full <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus +
                 data = Xdata_species_within, family = binomial)
 summary(glm.full)
 
-nested1 <- lmer(any_coinf_within ~ Year + Elevation + Country + 
-                (Host_order | Host_genus),
-              data = malaria)
+nested1 <- glm(any_coinf_within ~ Host_order/Host_family, data = Xdata_order_within,
+               family = binomial)
 summary(nested1)
+
+nested2 <- lmer(any_coinf_within ~ Year + Elevation + Country + 
+                (1 | Host_order / Host_genus / Host_family / Host_species), data = Xdata_order_within)
+summary(nested2)
 ```
 
 NOTE: Try removing Kenya for regressions with elevation as covariate (doesn't behave the same as high elevation locations); could look specifically at Mozambique for differences by elevation (sampling locations)
