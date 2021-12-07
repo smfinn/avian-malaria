@@ -19,6 +19,8 @@ library(MASS)
 library(lme4)
 library(nlme)
 library(mice)
+library(gt)
+library(paletteer)
 theme_set(
   theme_minimal()
 )
@@ -254,19 +256,31 @@ malaria <- malaria %>% mutate(Host_order = as.factor(malaria$Host_order),
 ## Exploratory Data Analysis
 
 ```{r}
-table(malaria$Country)
-table(malaria$District)
-hist(malaria$Elevation)
+country.table <- as.data.frame(table(malaria$Country))
+country.table <- data.frame(Country = country.table$Var1, Count = country.table$Freq)
+country.table %>% gt(rowname_col = "Country") %>% 
+  tab_stubhead(label = md("**Country**")) %>%
+  tab_header(title = md("**Number of Avian Samples by Country**")) %>%
+  fmt_number(columns = Count, decimals = 0) %>%
+  cols_align(columns = Count, align = "center") %>%
+  cols_label(Count = md("**Count**")) %>%
+  cols_width(Country ~ px(160),
+             Count ~ px(100)) %>%
+  grand_summary_rows(fns = list("Total" = ~sum(.)),
+               formatter = fmt_number, decimals = 0) %>%
+  tab_style(cell_text(align = "left"), cells_stub_grand_summary())
 ```
 
 ```{r}
 elevation <- ggplot(malaria, aes(Elevation)) +
-  geom_histogram(bins = 15, fill = "forestgreen") +
+  geom_histogram(bins = 15, fill = "chartreuse3", color = "chartreuse4") +
   labs(title = "Elevation of Avian Samples",
-       x = "Elevation", y = "Frequency") +
-  scale_x_continuous(limits = c(0, 3000)) +
-  theme_classic()
+       x = "\nElevation of sample collection (ft)", y = "Number of samples \n") +
+  scale_x_continuous(limits = c(0, 3000))
 elevation
+
+ggsave("elevation hist.png", elevation, width = 6, height = 4)
+
 ```
 
 #### Infections by country
@@ -311,8 +325,8 @@ haemo_eda2 <- ggplot(haemo.country, aes(Var2, Freq, group = Var1)) +
         title = element_text(size = 9))
 
 haemo_eda <- grid.arrange(haemo_eda1, haemo_eda2, nrow = 1, 
-             top = "Haemocrodius Prevalence by Country")
-ggsave("haemocrodius by country.png", haemo_eda, width = 7, height = 4)
+             top = "Haemoproteus Prevalence by Country")
+ggsave("haemoproteus by country.png", haemo_eda, width = 7, height = 4)
 ```
 
 ```{r}
@@ -357,7 +371,8 @@ leuco_eda3 <- ggplot(leuco.sex, aes(Var2, Freq, group = Var1)) +
   scale_fill_brewer() +
   labs(title = "Stacked", x = "Sex", y = "Frequency") +
   theme(legend.position = "none", 
-        title = element_text(size = 9))
+        title = element_text(size = 9),
+        aspect.ratio = 1.4)
 
 leuco_eda4 <- ggplot(leuco.sex, aes(Var2, Freq, group = Var1)) +
   geom_bar(aes(fill = Var1), stat = "identity",  position = "fill") +
@@ -365,10 +380,10 @@ leuco_eda4 <- ggplot(leuco.sex, aes(Var2, Freq, group = Var1)) +
   labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
   theme(title = element_text(size = 9))
 
-leuco_eda_sex <- grid.arrange(leuco_eda3, leuco_eda4, nrow = 1, 
-             top = "Leucocytozoon Prevalence by Sex")
+leuco_eda_sex <- grid.arrange(leuco_eda3, leuco_eda4, nrow = 1, widths = c(1,1),
+                  top = "Leucocytozoon Prevalence by Sex")
 
-ggsave("leucocytozoon by sex.png", leuco_eda_sex, width = 4, height = 3)
+ggsave("leucocytozoon by sex.png", leuco_eda_sex, width = 6, height = 3)
 ```
 
 ```{r}
@@ -388,9 +403,9 @@ haemo_eda4 <- ggplot(haemo.sex, aes(Var2, Freq, group = Var1)) +
   labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
   theme(title = element_text(size = 9))
 
-haemo_eda_sex <- grid.arrange(haemo_eda3, haemo_eda4, nrow = 1, 
-             top = "Haemocrodius Prevalence by Sex")
-ggsave("haemocrodius by sex.png", haemo_eda_sex, width = 4, height = 3)
+haemo_eda_sex <- grid.arrange(haemo_eda3, haemo_eda4, nrow = 1, widths = c(1,1),
+             top = "Haemoproteus Prevalence by Sex")
+ggsave("haemocrodius by sex.png", haemo_eda_sex, width = 6, height = 3)
 ```
 
 ```{r}
@@ -410,9 +425,9 @@ plas_eda4 <- ggplot(plas.sex, aes(Var2, Freq, group = Var1)) +
   labs(title = "Standardized (percent)", x = "Sex", y = NULL) +
   theme(title = element_text(size = 9))
 
-plas_eda_sex <- grid.arrange(plas_eda3, plas_eda4, nrow = 1, 
+plas_eda_sex <- grid.arrange(plas_eda3, plas_eda4, nrow = 1, widths = c(1,1),
              top = "Plasmodium Prevalence by Sex")
-ggsave("plasmodium by sex.png", plas_eda_sex, width = 4, height = 3)
+ggsave("plasmodium by sex.png", plas_eda_sex, width = 6, height = 3)
 ```
 
 #### Significance testing by sex
@@ -499,7 +514,7 @@ wald_boxes_chart <- ggplot(wald_boxes, aes(genera, y)) +
   theme(legend.position = "none") +
   labs(title = "Prevalence of Malaria Infection by Genus (Unweighted)", 
        subtitle = "Among birds infected with each genus",
-       x = "\n Genus", y = "Percent of birds infected")
+       x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart
 
 ggsave("frequency by genus1.png", wald_boxes_chart, height = 4.5, width = 5)
@@ -525,7 +540,7 @@ wald_boxes_chart.w <- ggplot(wald_boxes.w, aes(genera, y)) +
   theme(legend.position = "none") +
   labs(title = "Prevalence of Malaria Infection by Genus (Weighted)", 
        subtitle = "Among birds infected with each genus",
-       x = "\n Genus", y = "Percent of birds infected")
+       x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart.w
 
 ggsave("frequency by genus1 weighted.png", wald_boxes_chart.w, height = 4.5, width = 5)
@@ -599,7 +614,7 @@ wald_boxes_chart2 <- ggplot(wald_boxes2, aes(genera, y)) +
   theme(legend.position = "none") +
   labs(title = "Prevalence of Malaria Infection by Genus (Unweighted)", 
        subtitle = "Among all birds screened for each genus", 
-       x = "\n Genus", y = "Percent of birds infected")
+       x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart2
 
 ggsave("frequency by genus2.png", wald_boxes_chart2, height = 4.5, width = 5)
@@ -624,161 +639,11 @@ wald_boxes_chart3 <- ggplot(wald_boxes3, aes(genera, y)) +
   theme(legend.position = "none") +
   labs(title = "Prevalence of Malaria Infection by Genus (Weighted)", 
        subtitle = "Among all birds screened for each genus", 
-       x = "\n Genus", y = "Percent of birds infected")
+       x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart3
 
 ggsave("frequency by genus3.png", wald_boxes_chart3, height = 4.5, width = 5)
 ```
-
-#### Bootstrapping: Among infected birds
-
-```{r}
-N <- 3418
-set.seed(94)
-
-## Leucocytozoon
-p_L
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-lowerciB  <- rep(NA, nsim)
-upperciB  <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  pB[i] <- sum(newB$posdesig_l == 2 | newB$posdesig_l == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
-              sum(newB$positive_l, na.rm = T)
-  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_l, na.rm = T)) 
-  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_l, na.rm = T))
-}
-
-phatLB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhatLB <- mean(lowerciB)
-upperhatLB <- mean(upperciB)
-
-cat("Leuco:", phatLB, lowerhatLB, upperhatLB)
-
-## Haemoproteus
-p_H
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-lowerciB  <- rep(NA, nsim)
-upperciB  <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  pB[i] <- sum(newB$posdesig_h == 2 | newB$posdesig_h == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
-              sum(newB$positive_h, na.rm = T)
-  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_h, na.rm = T)) 
-  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_h, na.rm = T))
-}
-
-phatHB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhatHB <- mean(lowerciB)
-upperhatHB <- mean(upperciB)
-
-cat("Haemo:", phatHB, lowerhatHB, upperhatHB)
-
-
-## Plasmodium
-p_P
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-lowerciB  <- rep(NA, nsim)
-upperciB  <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  pB[i] <- sum(newB$posdesig_p == 2 | newB$posdesig_p == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
-              sum(newB$positive_p, na.rm = T)
-  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_p, na.rm = T)) 
-  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_p, na.rm = T))
-}
-
-phatPB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhatPB <- mean(lowerciB)
-upperhatPB <- mean(upperciB)
-
-cat("Plasmodium:", phatPB, lowerhatPB, upperhatPB)
-```
-
-#### Bootstrapping: Among screened birds
-
-```{r}
-N <- 3418
-set.seed(94)
-
-## Leucocytozoon
-p2_L
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-lowerciB  <- rep(NA, nsim)
-upperciB  <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  pB[i] <- sum(newB$posdesig_l == 2 | newB$posdesig_l == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
-               sum(malaria$screened_l == "Yes")
-  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_l == "Yes")) 
-  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_l == "Yes"))
-}
-
-phat2LB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhat2LB <- mean(lowerciB)
-upperhat2LB <- mean(upperciB)
-
-cat("Leuco:", phat2LB, lowerhat2LB, upperhat2LB)
-
-## Haemoproteus
-p2_H
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-lowerciB  <- rep(NA, nsim)
-upperciB  <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  pB[i] <- sum(newB$posdesig_h == 2 | newB$posdesig_h == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
-               sum(malaria$screened_h == "Yes")
-  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_h == "Yes")) 
-  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_h == "Yes"))
-}
-
-phat2HB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhat2HB <- mean(lowerciB)
-upperhat2HB <- mean(upperciB)
-
-cat("Haemo:", phat2HB, lowerhat2HB, upperhat2HB)
-
-
-## Plasmodium
-p2_P
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-lowerciB  <- rep(NA, nsim)
-upperciB  <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  pB[i] <- sum(newB$posdesig_p == 2 | newB$posdesig_p == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
-               sum(malaria$screened_p == "Yes")
-  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_p == "Yes")) 
-  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_p == "Yes"))
-}
-
-phat2PB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhat2PB <- mean(lowerciB)
-upperhat2PB <- mean(upperciB)
-
-cat("Plasmodium:", phat2PB, lowerhat2PB, upperhat2PB)
-```
-
-
 
 ## 2. How often do co-infections occur between different genera of avian malarial pathogens?
 
@@ -821,72 +686,6 @@ wci4.upper <- wp3 + qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / screened_all)
 cat("Weighted 95% confidence interval: [", round(c(wci3.lower, wci3.upper)*100, 2), "] \n")
 
 ```
-
-#### Bootstrapping: Among infected birds
-
-```{r}
-N <- 3418
-set.seed(94)
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-infectedB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-coinfectedB  <- rep(NA, nsim)
-pB  <- rep(NA, nsim)
-lowerB <- rep(NA, nsim)
-upperB <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  infectedB[i] <- sum(newB$positive_l == 1 | 
-                      newB$positive_h == 1 | 
-                      newB$positive_p == 1, na.rm = T)
-  coinfectedB[i] <- sum((newB$positive_l == 1 & newB$positive_h == 1) | 
-                        (newB$positive_l == 1 & newB$positive_p == 1) |
-                        (newB$positive_h == 1 & newB$positive_p == 1), na.rm = T)
-  pB[i] <- coinfectedB[i] / infectedB[i]
-  lowerB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / infectedB[i])
-  upperB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / infectedB[i])
-}
-
-phatB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhatB <- mean(lowerB)
-upperhatB <- mean(upperB)
-
-cat("Among infected birds:", phatB, lowerhatB, upperhatB)
-```
-
-
-#### Bootstrapping: Among all birds screened
-
-```{r}
-N <- 3418
-set.seed(94)
-
-nsim <- 1500              # Set number of runs for bootstrap samples
-infectedB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
-coinfectedB  <- rep(NA, nsim)
-pB  <- rep(NA, nsim)
-lowerB <- rep(NA, nsim)
-upperB <- rep(NA, nsim)
-
-for (i in 1:nsim) {
-  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
-  screened_all <- sum(newB$screened_l=="Yes")
-  coinfectedB[i] <- sum((newB$positive_l == 1 & newB$positive_h == 1) | 
-                        (newB$positive_l == 1 & newB$positive_p == 1) |
-                        (newB$positive_h == 1 & newB$positive_p == 1), na.rm = T)
-  pB[i] <- coinfectedB[i] / screened_all
-  lowerB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / screened_all)
-  upperB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / screened_all)
-}
-
-phatB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
-lowerhatB <- mean(lowerB)
-upperhatB <- mean(upperB)
-
-cat("Among all birds screened:", phatB, lowerhatB, upperhatB)
-```
-
 
 ## 3. Are certain host birds more susceptible to co-infections than other hosts?
 
@@ -969,6 +768,61 @@ tax_freq_hists <- grid.arrange(order_hist, family_hist, genus_hist, species_hist
 ggsave("taxonomical frequencies.png", tax_freq_hists, height = 4, width = 3)
 ```
 
+### LOESS smoothing
+
+```{r loess.year}
+## Order
+malaria.red <- malaria[, c('Host_order', 'Host_family', 'Host_genus', 
+                           'Host_species', 'Year', 'coinf_within_order',
+                           'coinf_within_family', 'coinf_within_genus',
+                           'coinf_within_species', 'coinf_between_order', 
+                           'coinf_between_family', 'coinf_between_genus', 
+                           'coinf_between_species')]
+malaria.red <- malaria.red[!is.na(malaria.red$Year),]
+malaria.red <- malaria.red[malaria.red$Year != 2014,]
+order.loess.w <- ggplot(malaria.red, aes(Year, coinf_within_order)) +
+  geom_jitter(aes(color = as.factor(Year)), pch = 1, width = 0.4, height = 0.015,
+              show.legend = FALSE) + 
+  geom_smooth(method = "loess", color = "black", fill = "yellow", size = 0.7) +
+  scale_color_brewer(palette = "Set1") + 
+  labs(title = "Avian Orders' Within-Genus Coinfection Rates by Year \nwith LOESS Smoothing Curve",
+       x = "\nYear", y = "Coinfection\nrate") +
+  theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
+order.loess.w
+
+order.loess.b <- ggplot(malaria.red, aes(Year, coinf_between_order)) +
+  geom_jitter(aes(color = as.factor(Year)), pch = 1, width = 0.4, height = 0.015,
+              show.legend = FALSE) + 
+  geom_smooth(method = "loess", color = "black", fill = "yellow", size = 0.7) +
+  scale_color_brewer(palette = "Set1") + 
+  labs(title = "Avian Orders' Between-Genus Coinfection Rates by Year \nwith LOESS Smoothing Curve",
+       x = "\nYear", y = "Coinfection\nrate") +
+  theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
+order.loess.b
+
+species.loess.w <- ggplot(malaria.red, aes(Year, coinf_within_species)) +
+  geom_jitter(aes(color = as.factor(Year)), pch = 1, width = 0.4, height = 0.015,
+              show.legend = FALSE) + 
+  geom_smooth(method = "loess", color = "black", fill = "yellow", size = 0.7) +
+  scale_color_brewer(palette = "Set1") + 
+  labs(title = "Avian Species' Within-Genus Coinfection Rates by Year \nwith LOESS Smoothing Curve",
+       x = "\nYear", y = "Coinfection\nrate") +
+  theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
+species.loess.w
+
+species.loess.b <- ggplot(malaria.red, aes(Year, coinf_between_species)) +
+  geom_jitter(aes(color = as.factor(Year)), pch = 1, width = 0.4, height = 0.015,
+              show.legend = FALSE) + 
+  geom_smooth(method = "loess", color = "black", fill = "yellow", size = 0.7) +
+  scale_color_brewer(palette = "Set1") + 
+  labs(title = "Avian Species' Between-Genus Coinfection Rates by Year \nwith LOESS Smoothing Curve",
+       x = "\nYear", y = "Coinfection\nrate") +
+  theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
+species.loess.b
+
+```
+
+#### Chi-squared tests for independence
 ```{r chisquared.tests}
 # Chi-squared tests - within-genus co-infection
 (Xwithin.order <-   chisq.test(table(Xdata_order_within$Host_order, 
@@ -1003,6 +857,35 @@ Xbetween.genus$stdres
 (Xbetween.species <- chisq.test(table(Xdata_species_between$Host_species, 
                                       Xdata_species_between$any_coinf_between)))
 ```
+
+#### Tables for chi-squared tests
+```{r}
+X2.table.order.w <- data.frame(Order = attr(Xwithin.order$stdres, "dimnames")[[1]],
+                            Observed = Xwithin.order$observed[,1], 
+                            Expected = Xwithin.order$expected[,1], 
+                            Difference = (Xwithin.order$observed[,1] - Xwithin.order$expected[,1]), 
+                            Std.Res = Xwithin.order$stdres[,1])
+X2.table.order.w %>% gt(rowname_col = "Order") %>% 
+  tab_stubhead(label = md("**Order**")) %>%
+  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Order**")) %>%
+  fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
+  cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
+  cols_label(Observed = md("*Observed counts*"),
+             Expected = md("*Expected counts*"),
+             Difference = md("*Difference*"),
+             Std.Res = md("*Standard residuals*")) %>%
+  cols_width(Observed ~ px(100),
+             Expected ~ px(100),
+             Difference ~ px(100),
+             Std.Res ~ px(100),
+             Order ~ px(180)) %>%
+  data_color(columns = Std.Res,
+             colors = scales::col_numeric(
+               palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
+               domain = c(-8, 8)))
+
+```
+
 
 #### Logistic regression: All orders, families, genera
 ```{r basic.logreg}
@@ -1157,6 +1040,227 @@ plot(nested1, resid(., type = "pearson") ~ fitted(.) | any_coinf_within) ## conc
 NOTE: Try removing Kenya for regressions with elevation as covariate (doesn't behave the same as high elevation locations); could look specifically at Mozambique for differences by elevation (sampling locations)
 
 
+
+## 4. Does the likelihood of co-infection vary by malaria lineages?
+
+```{r}
+
+```
+
+## Appendix: Methods we tried that didn't work out
+
+#### Within-genus bootstrapping: Among infected birds
+
+```{r}
+N <- 3418
+set.seed(94)
+
+## Leucocytozoon
+p_L
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_l == 2 | newB$posdesig_l == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+              sum(newB$positive_l, na.rm = T)
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_l, na.rm = T)) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_l, na.rm = T))
+}
+
+phatLB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatLB <- mean(lowerciB)
+upperhatLB <- mean(upperciB)
+
+cat("Leuco:", phatLB, lowerhatLB, upperhatLB)
+
+## Haemoproteus
+p_H
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_h == 2 | newB$posdesig_h == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+              sum(newB$positive_h, na.rm = T)
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_h, na.rm = T)) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_h, na.rm = T))
+}
+
+phatHB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatHB <- mean(lowerciB)
+upperhatHB <- mean(upperciB)
+
+cat("Haemo:", phatHB, lowerhatHB, upperhatHB)
+
+
+## Plasmodium
+p_P
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_p == 2 | newB$posdesig_p == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+              sum(newB$positive_p, na.rm = T)
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_p, na.rm = T)) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(newB$positive_p, na.rm = T))
+}
+
+phatPB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatPB <- mean(lowerciB)
+upperhatPB <- mean(upperciB)
+
+cat("Plasmodium:", phatPB, lowerhatPB, upperhatPB)
+```
+
+#### Within-genus bootstrapping: Among screened birds
+
+```{r}
+N <- 3418
+set.seed(94)
+
+## Leucocytozoon
+p2_L
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_l == 2 | newB$posdesig_l == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+               sum(malaria$screened_l == "Yes")
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_l == "Yes")) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_l == "Yes"))
+}
+
+phat2LB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhat2LB <- mean(lowerciB)
+upperhat2LB <- mean(upperciB)
+
+cat("Leuco:", phat2LB, lowerhat2LB, upperhat2LB)
+
+## Haemoproteus
+p2_H
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_h == 2 | newB$posdesig_h == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+               sum(malaria$screened_h == "Yes")
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_h == "Yes")) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_h == "Yes"))
+}
+
+phat2HB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhat2HB <- mean(lowerciB)
+upperhat2HB <- mean(upperciB)
+
+cat("Haemo:", phat2HB, lowerhat2HB, upperhat2HB)
+
+
+## Plasmodium
+p2_P
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+pB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+lowerciB  <- rep(NA, nsim)
+upperciB  <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  pB[i] <- sum(newB$posdesig_p == 2 | newB$posdesig_p == 3, na.rm = T) /        # Calculate sample proportions, confidence intervals
+               sum(malaria$screened_p == "Yes")
+  lowerciB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_p == "Yes")) 
+  upperciB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / sum(malaria$screened_p == "Yes"))
+}
+
+phat2PB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhat2PB <- mean(lowerciB)
+upperhat2PB <- mean(upperciB)
+
+cat("Plasmodium:", phat2PB, lowerhat2PB, upperhat2PB)
+```
+
+#### Between-genus bootstrapping: Among infected birds
+
+```{r}
+N <- 3418
+set.seed(94)
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+infectedB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+coinfectedB  <- rep(NA, nsim)
+pB  <- rep(NA, nsim)
+lowerB <- rep(NA, nsim)
+upperB <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  infectedB[i] <- sum(newB$positive_l == 1 | 
+                      newB$positive_h == 1 | 
+                      newB$positive_p == 1, na.rm = T)
+  coinfectedB[i] <- sum((newB$positive_l == 1 & newB$positive_h == 1) | 
+                        (newB$positive_l == 1 & newB$positive_p == 1) |
+                        (newB$positive_h == 1 & newB$positive_p == 1), na.rm = T)
+  pB[i] <- coinfectedB[i] / infectedB[i]
+  lowerB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / infectedB[i])
+  upperB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / infectedB[i])
+}
+
+phatB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatB <- mean(lowerB)
+upperhatB <- mean(upperB)
+
+cat("Among infected birds:", phatB, lowerhatB, upperhatB)
+```
+
+#### Between-genus bootstrapping: Among all birds screened
+
+```{r}
+N <- 3418
+set.seed(94)
+
+nsim <- 1500              # Set number of runs for bootstrap samples
+infectedB  <- rep(NA, nsim)   # Initialize vectors to store bootstrap statistics
+coinfectedB  <- rep(NA, nsim)
+pB  <- rep(NA, nsim)
+lowerB <- rep(NA, nsim)
+upperB <- rep(NA, nsim)
+
+for (i in 1:nsim) {
+  newB <- malaria[sample(1:N, N, replace = TRUE),]    # Sample malaria observations with replacement
+  screened_all <- sum(newB$screened_l=="Yes")
+  coinfectedB[i] <- sum((newB$positive_l == 1 & newB$positive_h == 1) | 
+                        (newB$positive_l == 1 & newB$positive_p == 1) |
+                        (newB$positive_h == 1 & newB$positive_p == 1), na.rm = T)
+  pB[i] <- coinfectedB[i] / screened_all
+  lowerB[i] <- pB[i] - qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / screened_all)
+  upperB[i] <- pB[i] + qnorm(0.975) * sqrt((pB[i] * (1 - pB[i])) / screened_all)
+}
+
+phatB <- mean(pB)           # Find mean of bootstrap vector for bootstrap proportion estimate
+lowerhatB <- mean(lowerB)
+upperhatB <- mean(upperB)
+
+cat("Among all birds screened:", phatB, lowerhatB, upperhatB)
+```
+
 #### k-means Clustering
 ```{r clustering.elevation}
 ## Order
@@ -1207,11 +1311,6 @@ plot(jitter(cl.table4$Year), jitter(cl.table4$coinf_between_species), col = clus
 ```
 
 
-## 4. Does the likelihood of co-infection vary by malaria lineages?
-
-```{r}
-
-```
 
 
 
