@@ -169,7 +169,10 @@ posL.infspecies <- as.data.frame(table(malaria.posL$Host_species, malaria.posL$l
 malaria.posH <- malaria[malaria$positive_h == 1,]
 posH.infspecies <- as.data.frame(table(malaria.posH$Host_species, malaria.posH$haemo_coinf))
 malaria.posP <- malaria[malaria$positive_p == 1,]
-posP.infspecies <- as.data.frame(table(malaria.posP$Host_species, malaria.posP$haemo_coinf))
+posP.infspecies <- as.data.frame(table(malaria.posP$Host_species, malaria.posP$plas_coinf))
+malaria.posB <- malaria[malaria$infected_any == 1,]
+posB.infspecies <- as.data.frame(table(malaria.posB$Host_species, malaria.posB$any_coinf_between))
+
 coinfL_species_infected <- data.frame(
   Host_species = posL.infspecies$Var1[posL.infspecies$Var2==0],
   yes.Lw = as.numeric(posL.infspecies$Freq[posL.infspecies$Var2==1]),
@@ -182,20 +185,30 @@ coinfP_species_infected <- data.frame(
   Host_species = posP.infspecies$Var1[posP.infspecies$Var2==0],
   yes.Pw = as.numeric(posP.infspecies$Freq[posP.infspecies$Var2==1]),
   no.Pw = as.numeric(posP.infspecies$Freq[posP.infspecies$Var2==0]))
+coinfB_species_infected <- data.frame(
+  Host_species = posB.infspecies$Var1[posB.infspecies$Var2==0],
+  yes.btwn = as.numeric(posB.infspecies$Freq[posB.infspecies$Var2==1]),
+  no.btwn = as.numeric(posB.infspecies$Freq[posB.infspecies$Var2==0]))
+
 coinfL_species_infected$coinf_Lwithin_infected <- (coinfL_species_infected$yes.Lw / 
   (coinfL_species_infected$yes.Lw + coinfL_species_infected$no.Lw))
 coinfP_species_infected$coinf_Pwithin_infected <- (coinfP_species_infected$yes.Pw / 
   (coinfP_species_infected$yes.Pw + coinfP_species_infected$no.Pw))
 coinfH_species_infected$coinf_Hwithin_infected <- (coinfH_species_infected$yes.Hw / 
   (coinfH_species_infected$yes.Hw + coinfH_species_infected$no.Hw))
+coinfB_species_infected$coinf_between_infected <- (coinfB_species_infected$yes.btwn / 
+  (coinfB_species_infected$yes.btwn + coinfB_species_infected$no.btwn))
+
 coinfL_species_infected <- coinfL_species_infected[, c("Host_species", "coinf_Lwithin_infected")]
 coinfH_species_infected <- coinfH_species_infected[, c("Host_species", "coinf_Hwithin_infected")]
 coinfP_species_infected <- coinfP_species_infected[, c("Host_species", "coinf_Pwithin_infected")]
+coinfB_species_infected <- coinfB_species_infected[, c("Host_species", "coinf_between_infected")]
 
 # Add co-infection rates among infected birds to main data frame  
 malaria <- merge(malaria, coinfL_species_infected, by = "Host_species", all.x = T)
 malaria <- merge(malaria, coinfH_species_infected, by = "Host_species", all.x = T)
 malaria <- merge(malaria, coinfP_species_infected, by = "Host_species", all.x = T)
+malaria <- merge(malaria, coinfB_species_infected, by = "Host_species", all.x = T)
 
 # Convert number of groups by taxonomic level to data frames
 order_freqs <- as.data.frame(table(malaria$Host_order))
@@ -657,7 +670,7 @@ coinfected_all <- sum((malaria$positive_l == 1 & malaria$positive_h == 1) |
     (malaria$positive_l == 1 & malaria$positive_p == 1) |
     (malaria$positive_h == 1 & malaria$positive_p == 1), na.rm = T)
 p3 <- coinfected_all / infected_all
-wp3 <- mean(coinf_species$coinf_between_species, na.rm = T)
+wp3 <- mean(coinfB_species_infected$coinf_between_infected, na.rm = T)
 cat("Unweighted p-hat:", round(p3, 4), "\n")
 cat("Weighted p-hat:", round(wp3, 4), "\n")
 
@@ -675,15 +688,16 @@ cat("Weighted 95% confidence interval: [", round(c(wci3.lower, wci3.upper)*100, 
 ```{r}
 screened_all <- sum(malaria$screened_l=="Yes") # Leuco is only genus that didn't get tested for all birds
 p4 <- coinfected_all / screened_all
+wp4 <- mean(coinf_species$coinf_between_species, na.rm = T)
 cat("Unweighted p-hat:", round(p4, 4), "\n")
-cat("Weighted p-hat:", round(wp3, 4), "\n")
+cat("Weighted p-hat:", round(wp4, 4), "\n")
 
 ci4.lower <- p4 - qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
 ci4.upper <- p4 + qnorm(0.975) * sqrt((p4 * (1 - p4)) / screened_all)
 cat("95% confidence interval: [", round(c(ci4.lower, ci4.upper)*100, 2), "] \n")
-wci4.lower <- wp3 - qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / screened_all)
-wci4.upper <- wp3 + qnorm(0.975) * sqrt((wp3 * (1 - wp3)) / screened_all)
-cat("Weighted 95% confidence interval: [", round(c(wci3.lower, wci3.upper)*100, 2), "] \n")
+wci4.lower <- wp4 - qnorm(0.975) * sqrt((wp4 * (1 - wp4)) / screened_all)
+wci4.upper <- wp4 + qnorm(0.975) * sqrt((wp4 * (1 - wp4)) / screened_all)
+cat("Weighted 95% confidence interval: [", round(c(wci4.lower, wci4.upper)*100, 2), "] \n")
 
 ```
 
@@ -777,7 +791,7 @@ malaria.red <- malaria[, c('Host_order', 'Host_family', 'Host_genus',
                            'coinf_within_family', 'coinf_within_genus',
                            'coinf_within_species', 'coinf_between_order', 
                            'coinf_between_family', 'coinf_between_genus', 
-                           'coinf_between_species')]
+                           'coinf_between_species', 'Elevation')]
 malaria.red <- malaria.red[!is.na(malaria.red$Year),]
 malaria.red <- malaria.red[malaria.red$Year != 2014,]
 order.loess.w <- ggplot(malaria.red, aes(Year, coinf_within_order)) +
@@ -819,7 +833,6 @@ species.loess.b <- ggplot(malaria.red, aes(Year, coinf_between_species)) +
        x = "\nYear", y = "Coinfection\nrate") +
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
 species.loess.b
-
 ```
 
 #### Chi-squared tests for independence
@@ -859,7 +872,7 @@ Xbetween.genus$stdres
 ```
 
 #### Tables for chi-squared tests
-```{r}
+```{r chisquared.tables}
 X2.table.order.w <- data.frame(Order = attr(Xwithin.order$stdres, "dimnames")[[1]],
                             Observed = Xwithin.order$observed[,1], 
                             Expected = Xwithin.order$expected[,1], 
@@ -1005,28 +1018,20 @@ summary(crrb.glm4)
 
 #### Nested logistic regression:
 ```{r nested.logreg}
-## Full models
-# glm.full.w <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus + 
-#                   Host_species + Year  + Country, 
-#                 data = Xdata_species_within, family = binomial)
-# summary(glm.full.w)
-# 
-# glm.full.b <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus + 
-#                   Host_species + Year  + Country, 
-#                 data = Xdata_species_between, family = binomial)
-# summary(glm.full.b)
-
 ## Nested models
 nested1 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family), 
-                data = Xdata_order_within, family = binomial)
+                control = glmerControl(optimizer = "bobyqa"), 
+                 data = Xdata_order_within, family = binomial)
 summary(nested1)
 
-nested2 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus), 
-                data = Xdata_order_within, family = binomial)
+nested2 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus),
+                control = glmerControl(optimizer = "bobyqa"), 
+                 data = Xdata_order_within, family = binomial)
 summary(nested2)
 
-# nested3 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus / Host_species),  # TAKES A WHILE TO RUN
-#                data = Xdata_order_within, family = binomial)
+nested3 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus / Host_species),  # TAKES A WHILE TO RUN
+                 control = glmerControl(optimizer = "bobyqa"), 
+                 data = Xdata_order_within, family = binomial)
 summary(nested3)
 
 anova(nested1, nested2)
@@ -1374,6 +1379,17 @@ cl.table2 <- cl.table2[!is.na(cl.table2$Elevation),]
 cluster2 <- kmeans(cl.table2[,c(2,3)], centers = 4)
 plot(cl.table2$Elevation, cl.table2$coinf_between_genus, col = cluster2$cluster)
 
+
+## Full models
+glm.full.w <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus +
+                  Host_species + Year  + Country,
+                data = Xdata_species_within, family = binomial)
+summary(glm.full.w)
+
+glm.full.b <- glm(any_coinf_within ~ Host_order + Host_family + Host_genus +
+                  Host_species + Year  + Country,
+                data = Xdata_species_between, family = binomial)
+summary(glm.full.b)
 
 
 ```
