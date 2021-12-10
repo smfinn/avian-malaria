@@ -271,7 +271,7 @@ malaria <- malaria %>% mutate(Host_order = as.factor(malaria$Host_order),
 ```{r}
 country.table <- as.data.frame(table(malaria$Country))
 country.table <- data.frame(Country = country.table$Var1, Count = country.table$Freq)
-country.table %>% gt(rowname_col = "Country") %>% 
+country.tab <- country.table %>% gt(rowname_col = "Country") %>% 
   tab_stubhead(label = md("**Country**")) %>%
   tab_header(title = md("**Number of Avian Samples by Country**")) %>%
   fmt_number(columns = Count, decimals = 0) %>%
@@ -282,6 +282,9 @@ country.table %>% gt(rowname_col = "Country") %>%
   grand_summary_rows(fns = list("Total" = ~sum(.)),
                formatter = fmt_number, decimals = 0) %>%
   tab_style(cell_text(align = "left"), cells_stub_grand_summary())
+country.tab
+
+gtsave(country.tab, "avian sample count by country.png")
 ```
 
 ```{r}
@@ -785,7 +788,7 @@ ggsave("taxonomical frequencies.png", tax_freq_hists, height = 4, width = 3)
 ### LOESS smoothing
 
 ```{r loess.year}
-## Order
+## Order #######################################################################
 malaria.red <- malaria[, c('Host_order', 'Host_family', 'Host_genus', 
                            'Host_species', 'Year', 'coinf_within_order',
                            'coinf_within_family', 'coinf_within_genus',
@@ -804,6 +807,8 @@ order.loess.w <- ggplot(malaria.red, aes(Year, coinf_within_order)) +
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
 order.loess.w
 
+ggsave("LOESS order within.png", order.loess.w)
+
 order.loess.b <- ggplot(malaria.red, aes(Year, coinf_between_order)) +
   geom_jitter(aes(color = as.factor(Year)), pch = 1, width = 0.4, height = 0.015,
               show.legend = FALSE) + 
@@ -814,6 +819,9 @@ order.loess.b <- ggplot(malaria.red, aes(Year, coinf_between_order)) +
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
 order.loess.b
 
+ggsave("LOESS order between.png", order.loess.b)
+
+## Species ######################################################################
 species.loess.w <- ggplot(malaria.red, aes(Year, coinf_within_species)) +
   geom_jitter(aes(color = as.factor(Year)), pch = 1, width = 0.4, height = 0.015,
               show.legend = FALSE) + 
@@ -824,6 +832,8 @@ species.loess.w <- ggplot(malaria.red, aes(Year, coinf_within_species)) +
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
 species.loess.w
 
+ggsave("LOESS species within.png", species.loess.w)
+
 species.loess.b <- ggplot(malaria.red, aes(Year, coinf_between_species)) +
   geom_jitter(aes(color = as.factor(Year)), pch = 1, width = 0.4, height = 0.015,
               show.legend = FALSE) + 
@@ -833,6 +843,9 @@ species.loess.b <- ggplot(malaria.red, aes(Year, coinf_between_species)) +
        x = "\nYear", y = "Coinfection\nrate") +
   theme(axis.title.y = element_text(angle = 0, vjust = 0.5))
 species.loess.b
+
+ggsave("LOESS species between.png", species.loess.b)
+
 ```
 
 #### Chi-squared tests for independence
@@ -920,7 +933,7 @@ summary.x2.table <- summary.x2 %>%
                domain = c(0, 1)))
 summary.x2.table
 
-gtsave(summary.x2.table, "Chi-Squared Summary Table.html")
+gtsave(summary.x2.table, "Chi-Squared Summary Table.png")
 ```
 
 ```{r chisquared.table1}
@@ -929,7 +942,7 @@ X2.table.order.w <- data.frame(Order = attr(Xwithin.order$stdres, "dimnames")[[1
                             Expected = Xwithin.order$expected[,1], 
                             Difference = (Xwithin.order$observed[,1] - Xwithin.order$expected[,1]), 
                             Std.Res = Xwithin.order$stdres[,1])
-X2.table.order.w %>% gt(rowname_col = "Order") %>% 
+table.order.w <- X2.table.order.w %>% gt(rowname_col = "Order") %>% 
   tab_stubhead(label = md("**Order**")) %>%
   tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Order**")) %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
@@ -948,6 +961,7 @@ X2.table.order.w %>% gt(rowname_col = "Order") %>%
                palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
                domain = c(-8, 8)))
 
+gtsave(table.order.w, "Chi-squared within-genus order.png")
 ```
 
 #### Logistic regression: All orders, families, genera
@@ -1112,7 +1126,7 @@ logreg.tab1 <- logreg.1 %>% gt(rowname_col = "Effects", groupname_col = "effectc
                domain = c(0, 1)))
 logreg.tab1
 
-gtsave(logreg.tab1, "Within-Genus LogReg Order.html")
+gtsave(logreg.tab1, "Within-Genus LogReg Order.png")
 ```
 
 ```{r logreg.table2}
@@ -1154,7 +1168,7 @@ logreg.tab2 <- logreg.2 %>% gt(rowname_col = "Effects", groupname_col = "effectc
                domain = c(0, 1)))
 logreg.tab2
 
-gtsave(logreg.tab2, "Within-Genus LogReg Family.html")
+gtsave(logreg.tab2, "Within-Genus LogReg Family.png")
 ```
 
 ```{r logreg.table3}
@@ -1196,7 +1210,7 @@ logreg.tab3 <- logreg.3 %>% gt(rowname_col = "Effects", groupname_col = "effectc
                domain = c(0, 1)))
 logreg.tab3
 
-gtsave(logreg.tab3, "Within-Genus LogReg Genus.html")
+gtsave(logreg.tab3, "Within-Genus LogReg Genus.png")
 ```
 
 ```{r logreg.table4}
@@ -1238,7 +1252,7 @@ logreg.tab4 <- logreg.4 %>% gt(rowname_col = "Effects", groupname_col = "effectc
                domain = c(0, 1)))
 logreg.tab4
 
-gtsave(logreg.tab4, "Within-Genus LogReg Species")
+gtsave(logreg.tab4, "Within-Genus LogReg Species.png")
 ```
 
 ```{r logreg.table5}
@@ -1280,7 +1294,7 @@ logreg.tab5 <- logreg.5 %>% gt(rowname_col = "Effects", groupname_col = "effectc
                domain = c(0, 1)))
 logreg.tab5
 
-gtsave(logreg.tab5, "Between-Genus LogReg Order.html")
+gtsave(logreg.tab5, "Between-Genus LogReg Order.png")
 ```
 
 ```{r logreg.table6}
@@ -1322,7 +1336,7 @@ logreg.tab6 <- logreg.6 %>% gt(rowname_col = "Effects", groupname_col = "effectc
                domain = c(0, 1)))
 logreg.tab6
 
-gtsave(logreg.tab6, "Between-Genus LogReg Family.html")
+gtsave(logreg.tab6, "Between-Genus LogReg Family.png")
 ```
 
 ```{r logreg.table7}
@@ -1364,7 +1378,7 @@ logreg.tab7 <- logreg.7 %>% gt(rowname_col = "Effects", groupname_col = "effectc
                domain = c(0, 1)))
 logreg.tab7
 
-gtsave(logreg.tab7, "Between-Genus LogReg Genus.html")
+gtsave(logreg.tab7, "Between-Genus LogReg Genus.png")
 ```
 
 
