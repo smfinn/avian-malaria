@@ -872,7 +872,58 @@ Xbetween.genus$stdres
 ```
 
 #### Tables for chi-squared tests
-```{r chisquared.tables}
+
+```{r chisquare.overall}
+summary.x2 <- data.frame(
+  wchi2 = c(Xwithin.order$statistic, Xwithin.family$statistic,
+            Xwithin.genus$statistic, Xwithin.species$statistic),
+  wdf = c(Xwithin.order$parameter, Xwithin.family$parameter,
+            Xwithin.genus$parameter, Xwithin.species$parameter),
+  wpval = c(Xwithin.order$p.value, Xwithin.family$p.value,
+            Xwithin.genus$p.value, Xwithin.species$p.value),
+  bchi2 = c(Xbetween.order$statistic, Xbetween.family$statistic,
+            Xbetween.genus$statistic, NA),
+  bdf = c(Xbetween.order$parameter, Xbetween.family$parameter,
+            Xbetween.genus$parameter, NA),
+  bpval = c(Xbetween.order$p.value, Xbetween.family$p.value,
+            Xbetween.genus$p.value, NA),
+  host.bird = c("Order", "Family", "Genus", "Species"))
+
+summary.x2.table <- summary.x2 %>% 
+  gt(rowname_col = "host.bird") %>% 
+  tab_stubhead(label = md("**Host Bird Taxonomic Group**")) %>%
+  tab_header(title = md("**Summary of Chi-Squared Test Results for Within- and Between-Genus Co-Infections by Reduced Taxonomic Group**")) %>%
+  fmt_number(columns = c(wchi2, bchi2), decimals = 2) %>%
+  fmt_number(columns = c(wdf, bdf), decimals = 0) %>%
+  fmt_number(columns = c(wpval, bpval), decimals = 3) %>%
+  cols_align(columns = c(wchi2, bchi2, wdf, bdf, wpval, bpval), 
+             align = "center") %>%
+  tab_spanner(label = md("**Within-Genus Co-Infection**"),
+              columns = c(wchi2, wdf, wpval)) %>%
+  tab_spanner(label = md("**Between-Genus Co-Infection**"),
+              columns = c(bchi2, bdf, bpval)) %>%
+  cols_label(wchi2 = md("*Test statistic*"),
+             bchi2 = md("*Test statistic*"),
+             wdf = md("*df*"), 
+             bdf = md("*df*"), 
+             wpval = md("*p-value*"),
+             bpval = md("*p-value*"),) %>%
+  cols_width(wchi2 ~ px(100),
+             bchi2 ~ px(100),
+             wdf ~ px(80),
+             bdf ~ px(80),
+             wpval ~ px(90),
+             bpval ~ px(90)) %>%
+  data_color(columns = c(wpval, bpval),
+             colors = scales::col_numeric(
+               palette = c("lightgreen", rep("lightgray", 9)),
+               domain = c(0, 1)))
+summary.x2.table
+
+gtsave(summary.x2.table, "Chi-Squared Summary Table.html")
+```
+
+```{r chisquared.table1}
 X2.table.order.w <- data.frame(Order = attr(Xwithin.order$stdres, "dimnames")[[1]],
                             Observed = Xwithin.order$observed[,1], 
                             Expected = Xwithin.order$expected[,1], 
