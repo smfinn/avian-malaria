@@ -926,7 +926,8 @@ summary.x2.table <- summary.x2 %>%
              wdf ~ px(80),
              bdf ~ px(80),
              wpval ~ px(90),
-             bpval ~ px(90)) %>%
+             bpval ~ px(90),
+             host.bird ~ px(150)) %>%
   data_color(columns = c(wpval, bpval),
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1106,8 +1107,9 @@ logreg.tab1 <- logreg.1 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
   fmt_number(columns = c(upper.ci), decimals = 2, pattern = "{x}]") %>%
-  cols_align(columns = c(Coefs, pvals, oddsratios, lower.ci, upper.ci), 
-             align = "center") %>%
+  cols_align(columns = c(Coefs, pvals, oddsratios), align = "center") %>%
+  cols_align(columns = lower.ci, align = "right") %>%
+  cols_align(columns = upper.ci, align = "left") %>%
   tab_spanner(label = md("*95% Confidence Interval*"),
               columns = c(lower.ci, upper.ci)) %>%
   cols_label(Coefs = md("*Log-odds ratio*"),
@@ -1118,8 +1120,9 @@ logreg.tab1 <- logreg.1 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
              oddsratios ~ px(100),
-             lower.ci ~ px(40),
-             upper.ci ~ px(50)) %>%
+             lower.ci ~ px(70),
+             upper.ci ~ px(70),
+             Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1148,8 +1151,9 @@ logreg.tab2 <- logreg.2 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
   fmt_number(columns = c(upper.ci), decimals = 2, pattern = "{x}]") %>%
-  cols_align(columns = c(Coefs, pvals, oddsratios, lower.ci, upper.ci), 
-             align = "center") %>%
+  cols_align(columns = c(Coefs, pvals, oddsratios), align = "center") %>%
+  cols_align(columns = lower.ci, align = "right") %>%
+  cols_align(columns = upper.ci, align = "left") %>%
   tab_spanner(label = md("*95% Confidence Interval*"),
               columns = c(lower.ci, upper.ci)) %>%
   cols_label(Coefs = md("*Log-odds ratio*"),
@@ -1160,8 +1164,9 @@ logreg.tab2 <- logreg.2 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
              oddsratios ~ px(100),
-             lower.ci ~ px(40),
-             upper.ci ~ px(50)) %>%
+             lower.ci ~ px(70),
+             upper.ci ~ px(70),
+             Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1190,8 +1195,9 @@ logreg.tab3 <- logreg.3 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
   fmt_number(columns = c(upper.ci), decimals = 2, pattern = "{x}]") %>%
-  cols_align(columns = c(Coefs, pvals, oddsratios, lower.ci, upper.ci), 
-             align = "center") %>%
+  cols_align(columns = c(Coefs, pvals, oddsratios), align = "center") %>%
+  cols_align(columns = lower.ci, align = "right") %>%
+  cols_align(columns = upper.ci, align = "left") %>%
   tab_spanner(label = md("*95% Confidence Interval*"),
               columns = c(lower.ci, upper.ci)) %>%
   cols_label(Coefs = md("*Log-odds ratio*"),
@@ -1202,8 +1208,9 @@ logreg.tab3 <- logreg.3 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
              oddsratios ~ px(100),
-             lower.ci ~ px(40),
-             upper.ci ~ px(50)) %>%
+             lower.ci ~ px(70),
+             upper.ci ~ px(70),
+             Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1232,8 +1239,9 @@ logreg.tab4 <- logreg.4 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
   fmt_number(columns = c(upper.ci), decimals = 2, pattern = "{x}]") %>%
-  cols_align(columns = c(Coefs, pvals, oddsratios, lower.ci, upper.ci), 
-             align = "center") %>%
+  cols_align(columns = c(Coefs, pvals, oddsratios), align = "center") %>%
+  cols_align(columns = lower.ci, align = "right") %>%
+  cols_align(columns = upper.ci, align = "left") %>%
   tab_spanner(label = md("*95% Confidence Interval*"),
               columns = c(lower.ci, upper.ci)) %>%
   cols_label(Coefs = md("*Log-odds ratio*"),
@@ -1244,8 +1252,9 @@ logreg.tab4 <- logreg.4 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
              oddsratios ~ px(100),
-             lower.ci ~ px(40),
-             upper.ci ~ px(50)) %>%
+             lower.ci ~ px(70),
+             upper.ci ~ px(70),
+             Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1274,8 +1283,9 @@ logreg.tab5 <- logreg.5 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
   fmt_number(columns = c(upper.ci), decimals = 2, pattern = "{x}]") %>%
-  cols_align(columns = c(Coefs, pvals, oddsratios, lower.ci, upper.ci), 
-             align = "center") %>%
+  cols_align(columns = c(Coefs, pvals, oddsratios), align = "center") %>%
+  cols_align(columns = lower.ci, align = "right") %>%
+  cols_align(columns = upper.ci, align = "left") %>%
   tab_spanner(label = md("*95% Confidence Interval*"),
               columns = c(lower.ci, upper.ci)) %>%
   cols_label(Coefs = md("*Log-odds ratio*"),
@@ -1286,8 +1296,9 @@ logreg.tab5 <- logreg.5 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
              oddsratios ~ px(100),
-             lower.ci ~ px(40),
-             upper.ci ~ px(50)) %>%
+             lower.ci ~ px(70),
+             upper.ci ~ px(70),
+             Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1316,8 +1327,9 @@ logreg.tab6 <- logreg.6 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
   fmt_number(columns = c(upper.ci), decimals = 2, pattern = "{x}]") %>%
-  cols_align(columns = c(Coefs, pvals, oddsratios, lower.ci, upper.ci), 
-             align = "center") %>%
+  cols_align(columns = c(Coefs, pvals, oddsratios), align = "center") %>%
+  cols_align(columns = lower.ci, align = "right") %>%
+  cols_align(columns = upper.ci, align = "left") %>%
   tab_spanner(label = md("*95% Confidence Interval*"),
               columns = c(lower.ci, upper.ci)) %>%
   cols_label(Coefs = md("*Log-odds ratio*"),
@@ -1328,8 +1340,9 @@ logreg.tab6 <- logreg.6 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
              oddsratios ~ px(100),
-             lower.ci ~ px(40),
-             upper.ci ~ px(50)) %>%
+             lower.ci ~ px(70),
+             upper.ci ~ px(70),
+             Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1358,8 +1371,9 @@ logreg.tab7 <- logreg.7 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
   fmt_number(columns = c(upper.ci), decimals = 2, pattern = "{x}]") %>%
-  cols_align(columns = c(Coefs, pvals, oddsratios, lower.ci, upper.ci), 
-             align = "center") %>%
+  cols_align(columns = c(Coefs, pvals, oddsratios), align = "center") %>%
+  cols_align(columns = lower.ci, align = "right") %>%
+  cols_align(columns = upper.ci, align = "left") %>%
   tab_spanner(label = md("*95% Confidence Interval*"),
               columns = c(lower.ci, upper.ci)) %>%
   cols_label(Coefs = md("*Log-odds ratio*"),
@@ -1370,8 +1384,9 @@ logreg.tab7 <- logreg.7 %>% gt(rowname_col = "Effects", groupname_col = "effectc
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
              oddsratios ~ px(100),
-             lower.ci ~ px(40),
-             upper.ci ~ px(50)) %>%
+             lower.ci ~ px(70),
+             upper.ci ~ px(70),
+             Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
