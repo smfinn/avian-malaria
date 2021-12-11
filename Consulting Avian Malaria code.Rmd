@@ -1207,9 +1207,9 @@ logreg.tab3 <- logreg.3 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              upper.ci = "") %>%
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
-             oddsratios ~ px(100),
+             oddsratios ~ px(70),
              lower.ci ~ px(70),
-             upper.ci ~ px(70),
+             upper.ci ~ px(100),
              Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
@@ -1251,9 +1251,9 @@ logreg.tab4 <- logreg.4 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              upper.ci = "") %>%
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
-             oddsratios ~ px(100),
+             oddsratios ~ px(70),
              lower.ci ~ px(70),
-             upper.ci ~ px(70),
+             upper.ci ~ px(100),
              Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
@@ -1355,7 +1355,7 @@ gtsave(logreg.tab6, "Between-Genus LogReg Family.png")
 ```{r logreg.table7}
 logreg.7 <- data.frame(Effects = c(sort(levels(Xdata_genus_between$Host_genus)[-1]),
                                    "Year", "DRC", "Malawi", "Mozambique", "Uganda"),
-                       effectcats = c(rep("Gebus (reference = Calandrella)", 11), 
+                       effectcats = c(rep("Genus (reference = Calandrella)", 11), 
                                       "Year", 
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrb.glm3))[-1, 1],
@@ -1383,9 +1383,9 @@ logreg.tab7 <- logreg.7 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              upper.ci = "") %>%
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
-             oddsratios ~ px(100),
+             oddsratios ~ px(70),
              lower.ci ~ px(70),
-             upper.ci ~ px(70),
+             upper.ci ~ px(100),
              Effects ~ px(200)) %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
