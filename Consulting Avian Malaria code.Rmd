@@ -1096,13 +1096,14 @@ logreg.1 <- data.frame(Effects = c("Coliiformes", "Columbiformes", "Coraciiforme
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrw.glm1))[-1, 1],
                        oddsratios = exp(coef(summary(crrw.glm1))[-1, 1]),
-                       lower.ci = exp(confint(crrw.glm1)[-1,1])*100,
-                       upper.ci = exp(confint(crrw.glm1)[-1,2])*100,
+                       lower.ci = exp(confint(crrw.glm1)[-1,1]),
+                       upper.ci = exp(confint(crrw.glm1)[-1,2]),
                        pvals = coef(summary(crrw.glm1))[-1, 4])
 
 logreg.tab1 <- logreg.1 %>% gt(rowname_col = "Effects", groupname_col = "effectcats") %>% 
   tab_stubhead(label = md("**Effects**")) %>%
-  tab_header(title = md("**Within-Genus Co-Infection Estimates and Confidence Intervals for Avian Host Orders from Multivariate Logistic Regression**")) %>%
+  tab_header(title = md("**Table 10.** *Within*-Genus Co-Infection Odds Ratios and Confidence Intervals for Avian Host Orders"),
+             subtitle = md("Output from Multivariate Logistic Regression")) %>%
   fmt_number(columns = c(Coefs, oddsratios), decimals = 2) %>%
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
@@ -1123,6 +1124,7 @@ logreg.tab1 <- logreg.1 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              lower.ci ~ px(70),
              upper.ci ~ px(70),
              Effects ~ px(200)) %>%
+  opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1140,13 +1142,14 @@ logreg.2 <- data.frame(Effects = c(sort(levels(Xdata_family_within$Host_family)[
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrw.glm2))[-1, 1],
                        oddsratios = exp(coef(summary(crrw.glm2))[-1, 1]),
-                       lower.ci = exp(confint(crrw.glm2)[-1,1])*100,
-                       upper.ci = exp(confint(crrw.glm2)[-1,2])*100,
+                       lower.ci = exp(confint(crrw.glm2)[-1,1]),
+                       upper.ci = exp(confint(crrw.glm2)[-1,2]),
                        pvals = coef(summary(crrw.glm2))[-1, 4])
 
 logreg.tab2 <- logreg.2 %>% gt(rowname_col = "Effects", groupname_col = "effectcats") %>% 
   tab_stubhead(label = md("**Effects**")) %>%
-  tab_header(title = md("**Within-Genus Co-Infection Estimates and Confidence Intervals for Avian Host Families from Multivariate Logistic Regression**")) %>%
+  tab_header(title = md("**Table 12.** *Within*-Genus Co-Infection Odds Ratios and Confidence Intervals for Avian Host Families"),
+             subtitle = md("Output from Multivariate Logistic Regression")) %>%
   fmt_number(columns = c(Coefs, oddsratios), decimals = 2) %>%
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
@@ -1167,6 +1170,7 @@ logreg.tab2 <- logreg.2 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              lower.ci ~ px(70),
              upper.ci ~ px(70),
              Effects ~ px(200)) %>%
+  opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1184,13 +1188,14 @@ logreg.3 <- data.frame(Effects = c(sort(levels(Xdata_genus_within$Host_genus)[-1
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrw.glm3))[-1, 1],
                        oddsratios = exp(coef(summary(crrw.glm3))[-1, 1]),
-                       lower.ci = exp(confint(crrw.glm3)[-1, 1])*100,
-                       upper.ci = exp(confint(crrw.glm3)[-1, 2])*100,
+                       lower.ci = exp(confint(crrw.glm3)[-1, 1]),
+                       upper.ci = exp(confint(crrw.glm3)[-1, 2]),
                        pvals = coef(summary(crrw.glm3))[-1, 4])
 
 logreg.tab3 <- logreg.3 %>% gt(rowname_col = "Effects", groupname_col = "effectcats") %>% 
   tab_stubhead(label = md("**Effects**")) %>%
-  tab_header(title = md("**Within-Genus Co-Infection Estimates and Confidence Intervals for Avian Host Genera from Multivariate Logistic Regression**")) %>%
+  tab_header(title = md("**Table 14.** *Within*-Genus Co-Infection Odds Ratios and Confidence Intervals for Avian Host Genera"),
+             subtitle = md("Output from Multivariate Logistic Regression")) %>%
   fmt_number(columns = c(Coefs, oddsratios), decimals = 2) %>%
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
@@ -1207,10 +1212,11 @@ logreg.tab3 <- logreg.3 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              upper.ci = "") %>%
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
-             oddsratios ~ px(70),
+             oddsratios ~ px(100),
              lower.ci ~ px(70),
-             upper.ci ~ px(100),
+             upper.ci ~ px(70),
              Effects ~ px(200)) %>%
+  opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1228,13 +1234,14 @@ logreg.4 <- data.frame(Effects = c(sort(levels(Xdata_species_within$Host_species
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrw.glm4))[-1, 1],
                        oddsratios = exp(coef(summary(crrw.glm4))[-1, 1]),
-                       lower.ci = exp(confint(crrw.glm4)[-1, 1])*100,
-                       upper.ci = exp(confint(crrw.glm4)[-1, 2])*100,
+                       lower.ci = exp(confint(crrw.glm4)[-1, 1]),
+                       upper.ci = exp(confint(crrw.glm4)[-1, 2]),
                        pvals = coef(summary(crrw.glm4))[-1, 4])
 
 logreg.tab4 <- logreg.4 %>% gt(rowname_col = "Effects", groupname_col = "effectcats") %>% 
   tab_stubhead(label = md("**Effects**")) %>%
-  tab_header(title = md("**Within-Genus Co-Infection Estimates and Confidence Intervals for Avian Host Species from Multivariate Logistic Regression**")) %>%
+  tab_header(title = md("**Table 16.** *Within*-Genus Co-Infection Odds Ratios and Confidence Intervals for Avian Host Species"),
+             subtitle = md("Output from Multivariate Logistic Regression")) %>%
   fmt_number(columns = c(Coefs, oddsratios), decimals = 2) %>%
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
@@ -1251,10 +1258,11 @@ logreg.tab4 <- logreg.4 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              upper.ci = "") %>%
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
-             oddsratios ~ px(70),
+             oddsratios ~ px(100),
              lower.ci ~ px(70),
-             upper.ci ~ px(100),
+             upper.ci ~ px(70),
              Effects ~ px(200)) %>%
+  opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1272,13 +1280,14 @@ logreg.5 <- data.frame(Effects = c(sort(levels(Xdata_order_between$Host_order)[-
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrb.glm1))[-1, 1],
                        oddsratios = exp(coef(summary(crrb.glm1))[-1, 1]),
-                       lower.ci = exp(confint(crrb.glm1)[-1,1])*100,
-                       upper.ci = exp(confint(crrb.glm1)[-1,2])*100,
+                       lower.ci = exp(confint(crrb.glm1)[-1,1]),
+                       upper.ci = exp(confint(crrb.glm1)[-1,2]),
                        pvals = coef(summary(crrb.glm1))[-1, 4])
 
 logreg.tab5 <- logreg.5 %>% gt(rowname_col = "Effects", groupname_col = "effectcats") %>% 
   tab_stubhead(label = md("**Effects**")) %>%
-  tab_header(title = md("**Between-Genus Co-Infection Estimates and Confidence Intervals for Avian Host Orders from Multivariate Logistic Regression**")) %>%
+  tab_header(title = md("**Table 11.** *Between*-Genus Co-Infection Odds Ratios and Confidence Intervals for Avian Host Orders"),
+             subtitle = md("Output from Multivariate Logistic Regression")) %>%
   fmt_number(columns = c(Coefs, oddsratios), decimals = 2) %>%
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
@@ -1299,6 +1308,7 @@ logreg.tab5 <- logreg.5 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              lower.ci ~ px(70),
              upper.ci ~ px(70),
              Effects ~ px(200)) %>%
+  opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1316,13 +1326,14 @@ logreg.6 <- data.frame(Effects = c(sort(levels(Xdata_family_between$Host_family)
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrb.glm2))[-1, 1],
                        oddsratios = exp(coef(summary(crrb.glm2))[-1, 1]),
-                       lower.ci = exp(confint(crrb.glm2)[-1,1])*100,
-                       upper.ci = exp(confint(crrb.glm2)[-1,2])*100,
+                       lower.ci = exp(confint(crrb.glm2)[-1,1]),
+                       upper.ci = exp(confint(crrb.glm2)[-1,2]),
                        pvals = coef(summary(crrb.glm2))[-1, 4])
 
 logreg.tab6 <- logreg.6 %>% gt(rowname_col = "Effects", groupname_col = "effectcats") %>% 
   tab_stubhead(label = md("**Effects**")) %>%
-  tab_header(title = md("**Between-Genus Co-Infection Estimates and Confidence Intervals for Avian Host Families from Multivariate Logistic Regression**")) %>%
+  tab_header(title = md("**Table 13.** *Between*-Genus Co-Infection Odds Ratios and Confidence Intervals for Avian Host Families"),
+             subtitle = md("Output from Multivariate Logistic Regression")) %>%
   fmt_number(columns = c(Coefs, oddsratios), decimals = 2) %>%
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
@@ -1343,6 +1354,7 @@ logreg.tab6 <- logreg.6 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              lower.ci ~ px(70),
              upper.ci ~ px(70),
              Effects ~ px(200)) %>%
+  opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
@@ -1360,13 +1372,14 @@ logreg.7 <- data.frame(Effects = c(sort(levels(Xdata_genus_between$Host_genus)[-
                                       rep("Country (reference = Kenya)", 4)),
                        Coefs = coef(summary(crrb.glm3))[-1, 1],
                        oddsratios = exp(coef(summary(crrb.glm3))[-1, 1]),
-                       lower.ci = exp(confint(crrb.glm3)[-1, 1])*100,
-                       upper.ci = exp(confint(crrb.glm3)[-1, 2])*100,
+                       lower.ci = exp(confint(crrb.glm3)[-1, 1]),
+                       upper.ci = exp(confint(crrb.glm3)[-1, 2]),
                        pvals = coef(summary(crrb.glm3))[-1, 4])
 
 logreg.tab7 <- logreg.7 %>% gt(rowname_col = "Effects", groupname_col = "effectcats") %>% 
   tab_stubhead(label = md("**Effects**")) %>%
-  tab_header(title = md("**Between-Genus Co-Infection Estimates and Confidence Intervals for Avian Host Genera from Multivariate Logistic Regression**")) %>%
+  tab_header(title = md("**Table 15.** *Between*-Genus Co-Infection Odds Ratios and Confidence Intervals for Avian Host Genera"),
+             subtitle = md("Output from Multivariate Logistic Regression")) %>%
   fmt_number(columns = c(Coefs, oddsratios), decimals = 2) %>%
   fmt_number(columns = c(pvals), decimals = 3) %>%
   fmt_number(columns = c(lower.ci), decimals = 2, pattern = "[{x},") %>%
@@ -1383,10 +1396,11 @@ logreg.tab7 <- logreg.7 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              upper.ci = "") %>%
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
-             oddsratios ~ px(70),
+             oddsratios ~ px(100),
              lower.ci ~ px(70),
-             upper.ci ~ px(100),
+             upper.ci ~ px(70),
              Effects ~ px(200)) %>%
+  opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
              colors = scales::col_numeric(
                palette = c("lightgreen", rep("lightgray", 9)),
