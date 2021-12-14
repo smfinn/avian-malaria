@@ -1258,9 +1258,9 @@ logreg.tab4 <- logreg.4 %>% gt(rowname_col = "Effects", groupname_col = "effectc
              upper.ci = "") %>%
   cols_width(Coefs ~ px(100),
              pvals ~ px(100),
-             oddsratios ~ px(100),
+             oddsratios ~ px(90),
              lower.ci ~ px(70),
-             upper.ci ~ px(70),
+             upper.ci ~ px(80),
              Effects ~ px(200)) %>%
   opt_align_table_header(align = "left") %>%
   data_color(columns = pvals,
@@ -1413,7 +1413,7 @@ gtsave(logreg.tab7, "Between-Genus LogReg Genus.png")
 
 #### Nested logistic regression:
 ```{r nested.logreg}
-## Nested models
+## Within-genus coinfection
 nested1 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family), 
                 control = glmerControl(optimizer = "bobyqa"), 
                  data = Xdata_order_within, family = binomial)
@@ -1429,16 +1429,88 @@ nested3 <- glmer(any_coinf_within ~ (1 | Host_order / Host_family / Host_genus /
                  data = Xdata_order_within, family = binomial)
 summary(nested3)
 
-anova(nested1, nested2)
-anova(nested2, nested3)
-anova(nested1, nested3)
+aov1 <- anova(nested3, nested2)
+aov2 <- anova(nested2, nested1)
+aov3 <- anova(nested1, nested3)
 
-plot(nested1, resid(., type = "pearson") ~ fitted(.) | any_coinf_within) ## concerning... need to look at weighting (https://slcladal.github.io/regression.html)
+# plot(nested1, resid(., type = "pearson") ~ fitted(.) | any_coinf_within) ## (https://slcladal.github.io/regression.html)
+
+## Between-genus coinfection
+nested4 <- glmer(any_coinf_between ~ (1 | Host_order / Host_family), 
+                 control = glmerControl(optimizer = "bobyqa"), 
+                 data = Xdata_order_between, family = binomial)
+summary(nested4)
+
+nested5 <- glmer(any_coinf_between ~ (1 | Host_order / Host_family / Host_genus),
+                 control = glmerControl(optimizer = "bobyqa"), 
+                 data = Xdata_order_between, family = binomial)
+summary(nested5)
+
+nested6 <- glmer(any_coinf_between ~ (1 | Host_order / Host_family / Host_genus / Host_species),
+                 control = glmerControl(optimizer = "bobyqa"), 
+                 data = Xdata_order_between, family = binomial)
+summary(nested6)
+
+aov4 <- anova(nested6, nested5)
+aov5 <- anova(nested5, nested4)
+aov6 <- anova(nested4, nested6)
+
+summary(nested6)
 
 ```
 
-NOTE: Try removing Kenya for regressions with elevation as covariate (doesn't behave the same as high elevation locations); could look specifically at Mozambique for differences by elevation (sampling locations)
 
+```{r nested.logreg}
+summary.nested <- data.frame(
+  order.variance = c(0.8685, 0.7291, 0.5452, 0.0000, 0.0000, 0.0000),
+  family.variance = c(0.4303, 0.3470, 0.3164, 0.965, 0.182, 0.0936),
+  genus.variance = c("-", 0.1993, 0.0629, "-", 1.079, 0.3567),
+  species.variance = c("-", "-", 0.4353, "-", "-", 1.0188),
+  chisq = c(NA, round(aov1$"Chisq"[2], 2), round(aov2$"Chisq"[2], 2),
+            NA, round(aov4$"Chisq"[2], 2), round(aov5$"Chisq"[2], 2)),
+  pvalue = c(NA, round(aov1$"Pr(>Chisq)"[2], 3), round(aov2$"Pr(>Chisq)"[2], 3),
+             NA, round(aov4$"Pr(>Chisq)"[2], 3), round(aov5$"Pr(>Chisq)"[2], 3)),
+  AIC = c(round(aov1$"AIC"[1], 1), round(aov1$"AIC"[2], 1), round(aov2$"AIC"[1], 1),
+          round(aov3$"AIC"[1], 1), round(aov3$"AIC"[2], 1), round(aov4$"AIC"[1], 1)),
+  model = rep(c("Order in Family in Genus in Species", "Order in Family in Genus", 
+                "Order in Family"), times = 2),
+  outcome = rep(c("Within-genus co-infection", "Between-genus co-infection"), 
+                each = 3))
+
+summary.nested.table <- summary.nested %>% 
+  gt(rowname_col = "model", groupname_col = "outcome") %>% 
+  tab_stubhead(label = md("**Nested Factors in Model**")) %>%
+  tab_header(title = md("**Table 16.** Summary of ANOVA Results for Full and Reduced Generalized \nMixed Effect Regression Models")) %>%
+  tab_spanner(label = md("*Random Effect Variance Component*"),
+              columns = c(order.variance, family.variance, genus.variance, 
+                         species.variance)) %>%
+  cols_align(columns = c(order.variance, family.variance, genus.variance, 
+                         species.variance, chisq, pvalue, AIC), 
+             align = "center") %>%
+  cols_label(order.variance = md("Order"),
+             family.variance = md("Familiy"),
+             genus.variance = md("Genus"), 
+             species.variance = md("Species"), 
+             chisq = md("*Chi-squared \nstatistic*"),
+             pvalue = md("*p-value*"),
+             AIC = md("*AIC*")) %>%
+  cols_width(order.variance ~ px(70),
+             family.variance ~ px(70),
+             genus.variance ~ px(70),
+             species.variance ~ px(70),
+             chisq ~ px(80),
+             pvalue ~ px(70),
+             AIC ~ px(80),
+             model ~ px(300)) %>%
+  tab_style(cell_text(style = "oblique"), cells_row_groups()) %>%
+  opt_align_table_header(align = "left")
+
+summary.nested.table
+
+gtsave(summary.nested.table, "Nested Models Summary Table.png")
+
+
+```
 
 
 ## 4. Does the likelihood of co-infection vary by malaria lineages?
