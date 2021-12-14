@@ -1462,16 +1462,16 @@ summary(nested6)
 
 ```{r table.nested.logreg}
 summary.nested <- data.frame(
-  order.variance = rev(c(0.8685, 0.7291, 0.5452, 0.0000, 0.0000, 0.0000)),
-  family.variance = rev(c(0.4303, 0.3470, 0.3164, 0.965, 0.182, 0.0936)),
-  genus.variance = rev(c("-", 0.1993, 0.0629, "-", 1.079, 0.3567)),
-  species.variance = rev(c("-", "-", 0.4353, "-", "-", 1.0188)),
+  order.variance = c(0.5452, 0.7291, 0.8685, 0.0000, 0.0000, 0.0000),
+  family.variance = c(0.3164, 0.3470, 0.4303, 0.0936, 0.182, 0.965),
+  genus.variance = c(0.0629, 0.1993, "-", 0.3567, 1.079, "-"),
+  species.variance = c(0.4353, "-", "-", 1.0188, "-", "-"),
   chisq = c(NA, round(aov1$"Chisq"[2], 2), round(aov2$"Chisq"[2], 2),
             NA, round(aov4$"Chisq"[2], 2), round(aov5$"Chisq"[2], 2)),
   pvalue = c(NA, round(aov1$"Pr(>Chisq)"[2], 3), round(aov2$"Pr(>Chisq)"[2], 3),
              NA, round(aov4$"Pr(>Chisq)"[2], 3), round(aov5$"Pr(>Chisq)"[2], 3)),
-  AIC = c(round(aov1$"AIC"[1], 1), round(aov1$"AIC"[2], 1), round(aov2$"AIC"[1], 1),
-          round(aov3$"AIC"[1], 1), round(aov3$"AIC"[2], 1), round(aov4$"AIC"[1], 1)),
+  AIC = c(round(aov1$"AIC"[2], 1), round(aov1$"AIC"[1], 1), round(aov2$"AIC"[1], 1),
+          round(aov4$"AIC"[2], 1), round(aov4$"AIC"[1], 1), round(aov5$"AIC"[1], 1)),
   model = rep(c("Order in Family in Genus in Species", "Order in Family in Genus", 
                 "Order in Family"), times = 2),
   outcome = rep(c("Within-genus co-infection", "Between-genus co-infection"), 
