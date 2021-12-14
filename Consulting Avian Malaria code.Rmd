@@ -1462,10 +1462,10 @@ summary(nested6)
 
 ```{r table.nested.logreg}
 summary.nested <- data.frame(
-  order.variance = c(0.8685, 0.7291, 0.5452, 0.0000, 0.0000, 0.0000),
-  family.variance = c(0.4303, 0.3470, 0.3164, 0.965, 0.182, 0.0936),
-  genus.variance = c("-", 0.1993, 0.0629, "-", 1.079, 0.3567),
-  species.variance = c("-", "-", 0.4353, "-", "-", 1.0188),
+  order.variance = rev(c(0.8685, 0.7291, 0.5452, 0.0000, 0.0000, 0.0000)),
+  family.variance = rev(c(0.4303, 0.3470, 0.3164, 0.965, 0.182, 0.0936)),
+  genus.variance = rev(c("-", 0.1993, 0.0629, "-", 1.079, 0.3567)),
+  species.variance = rev(c("-", "-", 0.4353, "-", "-", 1.0188)),
   chisq = c(NA, round(aov1$"Chisq"[2], 2), round(aov2$"Chisq"[2], 2),
             NA, round(aov4$"Chisq"[2], 2), round(aov5$"Chisq"[2], 2)),
   pvalue = c(NA, round(aov1$"Pr(>Chisq)"[2], 3), round(aov2$"Pr(>Chisq)"[2], 3),
