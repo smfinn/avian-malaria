@@ -533,7 +533,7 @@ wald_boxes_chart <- ggplot(wald_boxes, aes(genera, y)) +
        x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart
 
-ggsave("frequency by genus1.png", wald_boxes_chart, height = 4.5, width = 5)
+ggsave("frequency by genus1.png", wald_boxes_chart, height = 4, width = 6)
 ```
 
 
@@ -559,7 +559,7 @@ wald_boxes_chart.w <- ggplot(wald_boxes.w, aes(genera, y)) +
        x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart.w
 
-ggsave("frequency by genus1 weighted.png", wald_boxes_chart.w, height = 4.5, width = 5)
+ggsave("frequency by genus1 weighted.png", wald_boxes_chart.w, height = 4, width = 6)
 ```
 
 #### *Among all birds screened*
@@ -633,7 +633,7 @@ wald_boxes_chart2 <- ggplot(wald_boxes2, aes(genera, y)) +
        x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart2
 
-ggsave("frequency by genus2.png", wald_boxes_chart2, height = 4.5, width = 5)
+ggsave("frequency by genus2.png", wald_boxes_chart2, height = 4, width = 6)
 ```
 
 ```{r}
@@ -658,7 +658,7 @@ wald_boxes_chart3 <- ggplot(wald_boxes3, aes(genera, y)) +
        x = "\n Genus", y = "Percent of birds infected\n")
 wald_boxes_chart3
 
-ggsave("frequency by genus3.png", wald_boxes_chart3, height = 4.5, width = 5)
+ggsave("frequency by genus3.png", wald_boxes_chart3, height = 4, width = 6)
 ```
 
 ## 2. How often do co-infections occur between different genera of avian malarial pathogens?
