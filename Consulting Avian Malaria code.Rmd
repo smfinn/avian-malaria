@@ -1460,7 +1460,7 @@ summary(nested6)
 ```
 
 
-```{r nested.logreg}
+```{r table.nested.logreg}
 summary.nested <- data.frame(
   order.variance = c(0.8685, 0.7291, 0.5452, 0.0000, 0.0000, 0.0000),
   family.variance = c(0.4303, 0.3470, 0.3164, 0.965, 0.182, 0.0936),
@@ -1480,7 +1480,7 @@ summary.nested <- data.frame(
 summary.nested.table <- summary.nested %>% 
   gt(rowname_col = "model", groupname_col = "outcome") %>% 
   tab_stubhead(label = md("**Nested Factors in Model**")) %>%
-  tab_header(title = md("**Table 16.** Summary of ANOVA Results for Full and Reduced Generalized \nMixed Effect Regression Models")) %>%
+  tab_header(title = md("**Table 17.** Summary of ANOVA Results for Full and Reduced Generalized \nMixed Effect Regression Models")) %>%
   tab_spanner(label = md("*Random Effect Variance Component*"),
               columns = c(order.variance, family.variance, genus.variance, 
                          species.variance)) %>%
