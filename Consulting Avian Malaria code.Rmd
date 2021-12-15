@@ -961,8 +961,176 @@ table.order.w <- X2.table.order.w %>% gt(rowname_col = "Order") %>%
              colors = scales::col_numeric(
                palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
                domain = c(-8, 8)))
-
+table.order.w
 gtsave(table.order.w, "Chi-squared within-genus order.png")
+```
+
+```{r chisquared.table2}
+X2.table.order.b <- data.frame(Order = attr(Xbetween.order$stdres, "dimnames")[[1]],
+                            Observed = Xbetween.order$observed[,1], 
+                            Expected = Xbetween.order$expected[,1], 
+                            Difference = (Xbetween.order$observed[,1] - Xbetween.order$expected[,1]), 
+                            Std.Res = Xbetween.order$stdres[,1])
+table.order.b <- X2.table.order.b %>% gt(rowname_col = "Order") %>% 
+  tab_stubhead(label = md("**Order**")) %>%
+  tab_header(title = md("**Chi-Squared Test Results for Between-Genus Coinfection by Avian Order**")) %>%
+  fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
+  cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
+  cols_label(Observed = md("*Observed counts*"),
+             Expected = md("*Expected counts*"),
+             Difference = md("*Difference*"),
+             Std.Res = md("*Standard residuals*")) %>%
+  cols_width(Observed ~ px(100),
+             Expected ~ px(100),
+             Difference ~ px(100),
+             Std.Res ~ px(100),
+             Order ~ px(180)) %>%
+  data_color(columns = Std.Res,
+             colors = scales::col_numeric(
+               palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
+               domain = c(-8, 8)))
+table.order.b
+gtsave(table.order.b, "Chi-squared between-genus order.png")
+```
+
+```{r chisquared.table3}
+X2.table.family.w <- data.frame(Order = attr(Xwithin.family$stdres, "dimnames")[[1]],
+                            Observed = Xwithin.family$observed[,1], 
+                            Expected = Xwithin.family$expected[,1], 
+                            Difference = (Xwithin.family$observed[,1] - Xwithin.family$expected[,1]), 
+                            Std.Res = Xwithin.family$stdres[,1])
+table.family.w <- X2.table.family.w %>% gt(rowname_col = "Family") %>% 
+  tab_stubhead(label = md("**Family**")) %>%
+  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Family**")) %>%
+  fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
+  cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
+  cols_label(Observed = md("*Observed counts*"),
+             Expected = md("*Expected counts*"),
+             Difference = md("*Difference*"),
+             Std.Res = md("*Standard residuals*")) %>%
+  cols_width(Observed ~ px(100),
+             Expected ~ px(100),
+             Difference ~ px(100),
+             Std.Res ~ px(100),
+             Order ~ px(180)) %>%
+  data_color(columns = Std.Res,
+             colors = scales::col_numeric(
+               palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
+               domain = c(-8, 8)))
+table.family.w
+gtsave(table.family.w, "Chi-squared within-genus family.png")
+```
+
+```{r chisquared.table4}
+X2.table.family.b <- data.frame(Order = attr(Xbetween.family$stdres, "dimnames")[[1]],
+                            Observed = Xbetween.family$observed[,1], 
+                            Expected = Xbetween.family$expected[,1], 
+                            Difference = (Xbetween.family$observed[,1] - Xbetween.family$expected[,1]), 
+                            Std.Res = Xbetween.family$stdres[,1])
+table.family.b <- X2.table.family.b %>% gt(rowname_col = "Family") %>% 
+  tab_stubhead(label = md("**Family**")) %>%
+  tab_header(title = md("**Chi-Squared Test Results for Between-Genus Coinfection by Avian Family**")) %>%
+  fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
+  cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
+  cols_label(Observed = md("*Observed counts*"),
+             Expected = md("*Expected counts*"),
+             Difference = md("*Difference*"),
+             Std.Res = md("*Standard residuals*")) %>%
+  cols_width(Observed ~ px(100),
+             Expected ~ px(100),
+             Difference ~ px(100),
+             Std.Res ~ px(100),
+             Order ~ px(180)) %>%
+  data_color(columns = Std.Res,
+             colors = scales::col_numeric(
+               palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
+               domain = c(-8, 8)))
+table.family.b
+gtsave(table.order.b, "Chi-squared between-genus family.png")
+```
+
+```{r chisquared.table5}
+X2.table.genus.w <- data.frame(Order = attr(Xwithin.genus$stdres, "dimnames")[[1]],
+                            Observed = Xwithin.genus$observed[,1], 
+                            Expected = Xwithin.genus$expected[,1], 
+                            Difference = (Xwithin.genus$observed[,1] - Xwithin.genus$expected[,1]), 
+                            Std.Res = Xwithin.genus$stdres[,1])
+table.genus.w <- X2.table.genus.w %>% gt(rowname_col = "Genus") %>% 
+  tab_stubhead(label = md("**Genus**")) %>%
+  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Genus**")) %>%
+  fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
+  cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
+  cols_label(Observed = md("*Observed counts*"),
+             Expected = md("*Expected counts*"),
+             Difference = md("*Difference*"),
+             Std.Res = md("*Standard residuals*")) %>%
+  cols_width(Observed ~ px(100),
+             Expected ~ px(100),
+             Difference ~ px(100),
+             Std.Res ~ px(100),
+             Order ~ px(180)) %>%
+  data_color(columns = Std.Res,
+             colors = scales::col_numeric(
+               palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
+               domain = c(-8, 8)))
+table.genus.w
+gtsave(table.genus.w, "Chi-squared within-genus genus.png")
+```
+
+```{r chisquared.table6}
+X2.table.genus.b <- data.frame(Order = attr(Xbetween.genus$stdres, "dimnames")[[1]],
+                            Observed = Xbetween.genus$observed[,1], 
+                            Expected = Xbetween.genus$expected[,1], 
+                            Difference = (Xbetween.genus$observed[,1] - Xbetween.genus$expected[,1]), 
+                            Std.Res = Xbetween.genus$stdres[,1])
+table.genus.b <- X2.table.genus.b %>% gt(rowname_col = "Genus") %>% 
+  tab_stubhead(label = md("**Genus**")) %>%
+  tab_header(title = md("**Chi-Squared Test Results for Between-Genus Coinfection by Avian Genus**")) %>%
+  fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
+  cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
+  cols_label(Observed = md("*Observed counts*"),
+             Expected = md("*Expected counts*"),
+             Difference = md("*Difference*"),
+             Std.Res = md("*Standard residuals*")) %>%
+  cols_width(Observed ~ px(100),
+             Expected ~ px(100),
+             Difference ~ px(100),
+             Std.Res ~ px(100),
+             Order ~ px(180)) %>%
+  data_color(columns = Std.Res,
+             colors = scales::col_numeric(
+               palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
+               domain = c(-8, 8)))
+table.genus.b
+gtsave(table.order.b, "Chi-squared between-genus genus.png")
+```
+
+```{r chisquared.table7}
+X2.table.species.w <- data.frame(Order = attr(Xwithin.species$stdres, "dimnames")[[1]],
+                            Observed = Xwithin.species$observed[,1], 
+                            Expected = Xwithin.species$expected[,1], 
+                            Difference = (Xwithin.species$observed[,1] - Xwithin.species$expected[,1]), 
+                            Std.Res = Xwithin.species$stdres[,1])
+table.species.w <- X2.table.species.w %>% gt(rowname_col = "Species") %>% 
+  tab_stubhead(label = md("**Species**")) %>%
+  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Species**")) %>%
+  fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
+  cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
+  cols_label(Observed = md("*Observed counts*"),
+             Expected = md("*Expected counts*"),
+             Difference = md("*Difference*"),
+             Std.Res = md("*Standard residuals*")) %>%
+  cols_width(Observed ~ px(100),
+             Expected ~ px(100),
+             Difference ~ px(100),
+             Std.Res ~ px(100),
+             Order ~ px(180)) %>%
+  data_color(columns = Std.Res,
+             colors = scales::col_numeric(
+               palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
+               domain = c(-8, 8)))
+table.species.w
+gtsave(table.species.w, "Chi-squared within-genus species.png")
 ```
 
 #### Logistic regression: All orders, families, genera
