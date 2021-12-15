@@ -905,7 +905,8 @@ summary.x2 <- data.frame(
 summary.x2.table <- summary.x2 %>% 
   gt(rowname_col = "host.bird") %>% 
   tab_stubhead(label = md("**Host Bird Taxonomic Group**")) %>%
-  tab_header(title = md("**Summary of Chi-Squared Test Results for Within- and Between-Genus Co-Infections by Reduced Taxonomic Group**")) %>%
+  tab_header(title = md("**Table 2.** Summary of Chi-Squared Test Results for Within- and Between-Genus Co-Infections by Reduced Taxonomic Group")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(wchi2, bchi2), decimals = 2) %>%
   fmt_number(columns = c(wdf, bdf), decimals = 0) %>%
   fmt_number(columns = c(wpval, bpval), decimals = 3) %>%
@@ -945,7 +946,8 @@ X2.table.order.w <- data.frame(Order = attr(Xwithin.order$stdres, "dimnames")[[1
                             Std.Res = Xwithin.order$stdres[,1])
 table.order.w <- X2.table.order.w %>% gt(rowname_col = "Order") %>% 
   tab_stubhead(label = md("**Order**")) %>%
-  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Order**")) %>%
+  tab_header(title = md("**Table 3.** Chi-Squared Test Results for Within-Genus Coinfection by Avian Order")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
   cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
   cols_label(Observed = md("*Observed counts*"),
@@ -973,7 +975,8 @@ X2.table.order.b <- data.frame(Order = attr(Xbetween.order$stdres, "dimnames")[[
                             Std.Res = Xbetween.order$stdres[,1])
 table.order.b <- X2.table.order.b %>% gt(rowname_col = "Order") %>% 
   tab_stubhead(label = md("**Order**")) %>%
-  tab_header(title = md("**Chi-Squared Test Results for Between-Genus Coinfection by Avian Order**")) %>%
+  tab_header(title = md("**Table 4.** Chi-Squared Test Results for Between-Genus Coinfection by Avian Order")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
   cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
   cols_label(Observed = md("*Observed counts*"),
@@ -1001,7 +1004,8 @@ X2.table.family.w <- data.frame(Order = attr(Xwithin.family$stdres, "dimnames")[
                             Std.Res = Xwithin.family$stdres[,1])
 table.family.w <- X2.table.family.w %>% gt(rowname_col = "Family") %>% 
   tab_stubhead(label = md("**Family**")) %>%
-  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Family**")) %>%
+  tab_header(title = md("**Table 5.** Chi-Squared Test Results for Within-Genus Coinfection by Avian Family")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
   cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
   cols_label(Observed = md("*Observed counts*"),
@@ -1029,7 +1033,8 @@ X2.table.family.b <- data.frame(Order = attr(Xbetween.family$stdres, "dimnames")
                             Std.Res = Xbetween.family$stdres[,1])
 table.family.b <- X2.table.family.b %>% gt(rowname_col = "Family") %>% 
   tab_stubhead(label = md("**Family**")) %>%
-  tab_header(title = md("**Chi-Squared Test Results for Between-Genus Coinfection by Avian Family**")) %>%
+  tab_header(title = md("**Table 6.** Chi-Squared Test Results for Between-Genus Coinfection by Avian Family")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
   cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
   cols_label(Observed = md("*Observed counts*"),
@@ -1046,7 +1051,7 @@ table.family.b <- X2.table.family.b %>% gt(rowname_col = "Family") %>%
                palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
                domain = c(-8, 8)))
 table.family.b
-gtsave(table.order.b, "Chi-squared between-genus family.png")
+gtsave(table.family.b, "Chi-squared between-genus family.png")
 ```
 
 ```{r chisquared.table5}
@@ -1057,7 +1062,8 @@ X2.table.genus.w <- data.frame(Order = attr(Xwithin.genus$stdres, "dimnames")[[1
                             Std.Res = Xwithin.genus$stdres[,1])
 table.genus.w <- X2.table.genus.w %>% gt(rowname_col = "Genus") %>% 
   tab_stubhead(label = md("**Genus**")) %>%
-  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Genus**")) %>%
+  tab_header(title = md("**Table 7.** Chi-Squared Test Results for Within-Genus Coinfection by Avian Genus")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
   cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
   cols_label(Observed = md("*Observed counts*"),
@@ -1085,7 +1091,8 @@ X2.table.genus.b <- data.frame(Order = attr(Xbetween.genus$stdres, "dimnames")[[
                             Std.Res = Xbetween.genus$stdres[,1])
 table.genus.b <- X2.table.genus.b %>% gt(rowname_col = "Genus") %>% 
   tab_stubhead(label = md("**Genus**")) %>%
-  tab_header(title = md("**Chi-Squared Test Results for Between-Genus Coinfection by Avian Genus**")) %>%
+  tab_header(title = md("**Table 8.** Chi-Squared Test Results for Between-Genus Coinfection by Avian Genus")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
   cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
   cols_label(Observed = md("*Observed counts*"),
@@ -1102,7 +1109,7 @@ table.genus.b <- X2.table.genus.b %>% gt(rowname_col = "Genus") %>%
                palette = c("red", "orange", "yellow", "green", "yellow", "orange", "red"),
                domain = c(-8, 8)))
 table.genus.b
-gtsave(table.order.b, "Chi-squared between-genus genus.png")
+gtsave(table.genus.b, "Chi-squared between-genus genus.png")
 ```
 
 ```{r chisquared.table7}
@@ -1113,7 +1120,8 @@ X2.table.species.w <- data.frame(Order = attr(Xwithin.species$stdres, "dimnames"
                             Std.Res = Xwithin.species$stdres[,1])
 table.species.w <- X2.table.species.w %>% gt(rowname_col = "Species") %>% 
   tab_stubhead(label = md("**Species**")) %>%
-  tab_header(title = md("**Chi-Squared Test Results for Within-Genus Coinfection by Avian Species**")) %>%
+  tab_header(title = md("**Table 9.** Chi-Squared Test Results for Within-Genus Coinfection by Avian Species")) %>%
+  opt_align_table_header(align = "left") %>%
   fmt_number(columns = c(Observed, Expected, Difference, Std.Res), decimals = 2) %>%
   cols_align(columns = c(Observed, Expected, Difference, Std.Res), align = "center") %>%
   cols_label(Observed = md("*Observed counts*"),
